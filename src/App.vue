@@ -11,12 +11,15 @@ import HelloWorld from './components/HelloWorld.vue'
       <HelloWorld msg="You did it!" />
 
       <nav>
+        <!-- RouterLink: 用于创建导航链接，支持路由跳转 -->
         <RouterLink to="/">Home</RouterLink>
         <RouterLink to="/about">About</RouterLink>
       </nav>
     </div>
   </header>
 
+  <!-- RouterView 是Vue Router工作的关键组件，没有它，路由配置就无法生效。 -->
+  <!-- 例如：访问 / 显示HomeView，访问 /about 显示AboutView -->
   <RouterView />
 </template>
 
