@@ -1,7 +1,7 @@
-import './assets/main.css'
-
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import ElementPlus from 'element-plus'
+import 'element-plus/dist/index.css'
 
 import App from './App.vue'
 import router from './router'
@@ -16,6 +16,9 @@ app.use(createPinia())
 
 // 使用 Vue Router 路由，让应用支持页面路由功能
 app.use(router)
+
+// 使用 Element Plus
+app.use(ElementPlus)
 
 // 将Vue应用挂载到DOM元素上
 // '#app'对应index.html中的<div id="app"></div>
