@@ -1,134 +1,489 @@
 <script setup lang="ts">
-import { reactive, computed, ref } from 'vue'
+import { ref, reactive } from 'vue'
+import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
+import AboutView from './AboutView.vue'
+import { User, Lock } from '@element-plus/icons-vue'
+import GitHubIcon from '@/components/icons/GitHubIcon.vue'
+import { useRouter } from 'vue-router'
 
 const userStore = useUserStore()
+const loginFormRef = ref()
+const router = useRouter()
 
-const form = reactive({
-  account: '',
-  password: '',
+const loginForm = reactive({
+  username: '',
+  password: ''
 })
 
-const formRef = ref()
 const rules = {
-  account: [{ required: true, message: '请输入账号', trigger: 'blur' }],
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' }
+  ],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码不少于 6 位', trigger: 'blur' },
-  ],
+    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
+  ]
 }
 
-const canSubmit = computed(() => form.account.trim() !== '' && form.password.trim() !== '')
+const handleLogin = async () => {
+  if (!loginFormRef.value) return
 
-async function onSubmit() {
-  if (!formRef.value) return
-  await formRef.value.validate(async (valid: boolean) => {
-    if (!valid) return
-    if (!canSubmit.value || userStore.loading) return
-    await userStore.login({ account: form.account, password: form.password })
-  })
+  try {
+    await loginFormRef.value.validate()
+    await userStore.login({ account: loginForm.username, password: loginForm.password })
+
+    if (userStore.isLoggedIn) {
+      ElMessage.success('登录成功！')
+      // 登录成功后跳转到管理后台
+      router.push('/admin/dashboard')
+    }
+  } catch {
+    ElMessage.error('登录失败，请检查用户名和密码')
+  }
 }
 </script>
 
 <template>
-  <el-container class="page">
+  <div class="login-page">
+    <!-- 顶部系统导航 -->
     <el-header class="header">
       <div class="container header-inner">
-        <h1 class="logo">Watermelon</h1>
+        <div class="logo-section">
+          <RouterLink to="/" class="logo-link">
+            <img src="/logo.webp" alt="Watermelon Logo" class="logo-icon" />
+            <h1 class="logo">Watermelon</h1>
+          </RouterLink>
+        </div>
         <el-space>
-          <RouterLink to="/">首页</RouterLink>
-          <RouterLink to="/about">关于</RouterLink>
-          <RouterLink to="/login">登录</RouterLink>
+          <!-- 登录按钮已删除 -->
         </el-space>
       </div>
     </el-header>
 
-    <el-main class="main">
-      <div class="container two-col">
-        <el-card class="left">
-          <template #header>
-            <span>登录 / 注册</span>
-          </template>
-          <el-form ref="formRef" :model="form" :rules="rules" label-width="72px" @submit.prevent>
-            <el-form-item label="账号" prop="account">
-              <el-input v-model="form.account" placeholder="请输入账号" clearable />
-            </el-form-item>
-            <el-form-item label="密码" prop="password">
-              <el-input
-                v-model="form.password"
-                type="password"
-                placeholder="请输入密码"
-                show-password
-              />
-            </el-form-item>
-            <el-form-item>
-              <el-button
-                type="primary"
-                :loading="userStore.loading"
-                :disabled="!canSubmit"
-                @click="onSubmit"
-              >
-                登录
-              </el-button>
-              <el-button>注册</el-button>
-            </el-form-item>
-            <el-alert
-              v-if="userStore.errorMessage"
-              :title="userStore.errorMessage"
-              type="error"
-              show-icon
-            />
-          </el-form>
-        </el-card>
+    <!-- 中间登录内容 - 左右两栏布局 -->
+    <main class="main-content">
+      <div class="login-container">
+        <!-- 左侧登录表单 -->
+        <div class="login-form-section">
+          <div class="login-box">
+            <h2 class="login-title">
+              <img src="/logo.webp" alt="Watermelon Logo" class="title-logo" />
+              登录
+            </h2>
 
-        <el-card class="right">
-          <template #header>
-            <span>系统介绍</span>
-          </template>
-          <el-descriptions :column="1" border>
-            <el-descriptions-item label="功能一">xxxxx</el-descriptions-item>
-            <el-descriptions-item label="功能二">xxxxx</el-descriptions-item>
-            <el-descriptions-item label="功能三">xxxxx</el-descriptions-item>
-          </el-descriptions>
-        </el-card>
+            <el-form :model="loginForm" :rules="rules" ref="loginFormRef" class="login-form">
+              <el-form-item prop="username">
+                <el-input
+                  v-model="loginForm.username"
+                  placeholder="请输入用户名"
+                  size="large"
+                >
+                  <template #prefix>
+                    <el-icon><User /></el-icon>
+                  </template>
+                </el-input>
+              </el-form-item>
+
+              <el-form-item prop="password">
+                <el-input
+                  v-model="loginForm.password"
+                  type="password"
+                  placeholder="请输入密码"
+                  size="large"
+                  show-password
+                >
+                  <template #prefix>
+                    <el-icon><Lock /></el-icon>
+                  </template>
+                </el-input>
+              </el-form-item>
+
+              <el-form-item>
+                <el-button type="primary" size="large" class="login-btn" @click="handleLogin">
+                  登录
+                </el-button>
+              </el-form-item>
+            </el-form>
+          </div>
+        </div>
+
+        <!-- 右侧系统介绍 -->
+        <div class="welcome-section">
+          <div class="welcome-box">
+            <h2 class="welcome-title">欢迎来到 Watermelon</h2>
+            <p class="welcome-subtitle">用户权限管理系统</p>
+
+            <div class="feature-list">
+              <div class="feature-item">
+                <div class="feature-content">
+                  <p>用户登录、注册和权限管理系统</p>
+                  <p>用户登录、注册和权限管理系统</p>
+                  <p>用户登录、注册和权限管理系统</p>
+                  <p>用户登录、注册和权限管理系统</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="welcome-footer">
+              <p>
+                <a href="https://github.com/Yi-Xing/watermelon" target="_blank" class="github-link">
+                  <GitHubIcon :size="18" />
+                  GitHub 仓库
+                </a>
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
-    </el-main>
+    </main>
 
-    <el-footer class="footer">
-      <div class="container">© {{ new Date().getFullYear() }} Watermelon</div>
-    </el-footer>
-  </el-container>
+    <!-- 底部关于信息 - 嵌入 AboutView 组件 -->
+    <footer class="footer">
+      <div class="container">
+        <AboutView />
+      </div>
+    </footer>
+  </div>
 </template>
 
 <style scoped>
-.page {
+.login-page {
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
-.container {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 0 16px;
+
+/* 顶部导航样式 */
+.header {
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
+
 .header-inner {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
+  height: 100%;
 }
+
+.logo-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logo-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  gap: 12px;
+  transition: opacity 0.3s;
+}
+
+.logo-link:hover {
+  opacity: 0.8;
+}
+
+.logo-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
 .logo {
+  font-size: 24px;
+  font-weight: bold;
+  color: #62a2f0;
   margin: 0;
-  font-size: 20px;
 }
-.main {
-  padding: 24px 0;
+
+.header-inner a {
+  color: #495057;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  transition: all 0.3s;
 }
-.two-col {
+
+.header-inner a:hover {
+  color: #62a2f0;
+  background: rgba(98, 162, 240, 0.1);
+}
+
+/* 中间登录内容样式 - 左右两栏布局 */
+.main-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;
+  padding: 20px;
+}
+
+.login-container {
+  width: 100%;
+  max-width: 1000px;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 40px;
+  align-items: center;
 }
+
+/* 左侧登录表单样式 */
+.login-form-section {
+  display: flex;
+  justify-content: center;
+}
+
+.login-box {
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+  min-width: 0;
+  height: 360px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.login-title {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #303133;
+  font-size: 24px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.title-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.login-form {
+  margin-bottom: 15px;
+}
+
+.login-btn {
+  width: 100%;
+  height: 44px;
+  font-size: 16px;
+  font-weight: 500;
+  margin-top: 10px;
+}
+
+/* 右侧欢迎介绍样式 */
+.welcome-section {
+  display: flex;
+  justify-content: center;
+}
+
+.welcome-box {
+  background-color: rgba(98, 162, 240, .1);
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(98, 162, 240, 0.15);
+  width: 100%;
+  max-width: 400px;
+  min-width: 0;
+  height: 360px;
+  border: 1px solid rgba(98, 162, 240, 0.2);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.welcome-title {
+  text-align: center;
+  margin-bottom: 8px;
+  color: #303133;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.welcome-subtitle {
+  text-align: center;
+  margin-bottom: 25px;
+  color: #606266;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.feature-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  margin-bottom: 15px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 15px;
+  background: rgba(64, 158, 255, 0.05);
+  border-radius: 8px;
+  border-left: 4px solid #409eff;
+}
+
+.feature-icon {
+  font-size: 24px;
+  color: #409eff;
+  margin-right: 15px;
+  margin-top: 2px;
+}
+
+.feature-content h4 {
+  margin: 0 0 8px 0;
+  color: #303133;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.feature-content p {
+  margin: 0;
+  color: #606266;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.welcome-footer {
+  text-align: center;
+  padding-top: 20px;
+  border-top: 1px solid #e4e7ed;
+  margin-top: auto;
+}
+
+.welcome-footer p {
+  margin: 0;
+  color: #409eff;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.github-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #409eff;
+  text-decoration: none;
+  transition: all 0.3s;
+  padding: 8px 16px;
+  border-radius: 6px;
+  background: rgba(64, 158, 255, 0.1);
+}
+
+.github-link:hover {
+  background: rgba(64, 158, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+/* 底部样式 */
+.footer {
+  background: #2c3e50;
+  color: #ecf0f1;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* 响应式设计 */
 @media (max-width: 768px) {
-  .two-col {
+  .main-content {
+    padding: 15px;
+  }
+
+  .login-container {
     grid-template-columns: 1fr;
+    gap: 20px;
+    max-width: 100%;
+  }
+
+  .login-box,
+  .welcome-box {
+    padding: 25px 20px;
+    height: auto;
+    min-height: 320px;
+    max-width: 100%;
+  }
+
+  .login-title {
+    font-size: 22px;
+    margin-bottom: 20px;
+    gap: 8px;
+  }
+
+  .title-logo {
+    width: 28px;
+    height: 28px;
+  }
+
+  .welcome-title {
+    font-size: 24px;
+    margin-bottom: 6px;
+  }
+
+  .welcome-subtitle {
+    font-size: 15px;
+    margin-bottom: 20px;
+  }
+
+  .feature-item {
+    padding: 12px;
+    margin-bottom: 15px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding: 10px;
+  }
+
+  .login-container {
+    gap: 15px;
+  }
+
+  .login-box,
+  .welcome-box {
+    padding: 20px 15px;
+    min-height: 300px;
+  }
+
+  .login-title {
+    font-size: 20px;
+    margin-bottom: 18px;
+    gap: 6px;
+  }
+
+  .title-logo {
+    width: 24px;
+    height: 24px;
+  }
+
+  .welcome-title {
+    font-size: 22px;
+  }
+
+  .welcome-subtitle {
+    font-size: 14px;
   }
 }
 </style>
