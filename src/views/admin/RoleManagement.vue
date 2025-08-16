@@ -320,7 +320,6 @@ const handleReset = () => {
 const handleAdd = () => {
   dialogType.value = 'add'
   resetRoleForm()
-  console.log('新增角色 - 表单重置后:', roleForm)
   roleDialogVisible.value = true
 }
 
@@ -469,7 +468,6 @@ const handleUpdateResourcesSubmit = async () => {
 
 // 重置角色表单
 const resetRoleForm = () => {
-  console.log('重置表单前:', roleForm)
   Object.assign(roleForm, {
     id: 0,
     name: '',
@@ -477,7 +475,6 @@ const resetRoleForm = () => {
     state: 1,
     remark: '',
   })
-  console.log('重置表单后:', roleForm)
   currentRoleId.value = null
 }
 
