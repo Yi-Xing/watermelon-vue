@@ -182,7 +182,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Upload, Download } from '@element-plus/icons-vue'
 import type { Resource, ResourceForm, ResourceSearchForm, ResourceTreeNode } from '@/types/resource'
 import { ResourceType, ResourceStatus } from '@/types/resource'
-import * as resourceApi from '@/api/resource'
+import * as resourceApi from '@/api/admin/resource'
 
 // 搜索表单
 const searchForm = reactive<ResourceSearchForm>({

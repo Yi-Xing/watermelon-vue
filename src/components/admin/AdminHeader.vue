@@ -26,35 +26,41 @@
   </el-header>
 
   <!-- 个人资料对话框 -->
-  <el-dialog v-model="profileDialogVisible" title="个人资料" width="500px">
+  <el-dialog v-model="profileDialogVisible" title="个人资料" width="600px">
     <div class="profile-content">
-      <div class="profile-item">
-        <label>用户ID：</label>
-        <span>{{ currentUser.id }}</span>
-      </div>
-      <div class="profile-item">
-        <label>用户名：</label>
-        <span>{{ currentUser.name }}</span>
-      </div>
-      <div class="profile-item">
-        <label>邮箱：</label>
-        <span>{{ currentUser.email }}</span>
-      </div>
-      <div class="profile-item">
-        <label>手机号：</label>
-        <span>{{ currentUser.phone }}</span>
-      </div>
-      <div class="profile-item">
-        <label>备注：</label>
-        <span>{{ currentUser.remark || '无' }}</span>
-      </div>
-      <div class="profile-item">
-        <label>创建时间：</label>
-        <span>{{ currentUser.createdTime }}</span>
+      <div class="profile-grid">
+        <div class="profile-item">
+          <label class="profile-label">用户ID</label>
+          <span class="profile-value">{{ currentUser.id }}</span>
+        </div>
+        <div class="profile-item">
+          <label class="profile-label">用户名</label>
+          <span class="profile-value">{{ currentUser.name }}</span>
+        </div>
+        <div class="profile-item">
+          <label class="profile-label">邮箱</label>
+          <span class="profile-value">{{ currentUser.email || '未设置' }}</span>
+        </div>
+        <div class="profile-item">
+          <label class="profile-label">手机号</label>
+          <span class="profile-value">{{ currentUser.phone || '未设置' }}</span>
+        </div>
+        <div class="profile-item full-width">
+          <label class="profile-label">备注</label>
+          <span class="profile-value">{{ currentUser.remark || '无备注信息' }}</span>
+        </div>
+        <div class="profile-item">
+          <label class="profile-label">创建时间</label>
+          <span class="profile-value">{{ currentUser.createdTime }}</span>
+        </div>
+        <div class="profile-item">
+          <label class="profile-label">更新时间</label>
+          <span class="profile-value">{{ currentUser.updatedTime }}</span>
+        </div>
       </div>
     </div>
     <template #footer>
-      <el-button @click="profileDialogVisible = false">关闭</el-button>
+      <el-button @click="profileDialogVisible = false" type="primary">关闭</el-button>
     </template>
   </el-dialog>
 </template>
@@ -64,7 +70,7 @@ import { reactive, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
-import { getCurrentUser } from '@/api/user'
+import { getCurrentUser, logout } from '@/api/admin/user'
 import type { CurrentUser } from '@/types/user'
 
 const router = useRouter()
@@ -77,6 +83,7 @@ const currentUser = reactive<CurrentUser>({
   phone: '',
   remark: '',
   createdTime: '',
+  updatedTime: '',
 })
 
 const userAvatar = ref('/DefaultAvatar.png')
@@ -98,10 +105,16 @@ const handleProfile = () => {
   profileDialogVisible.value = true
 }
 
-const handleLogout = () => {
-  ElMessage.success('退出登录成功')
-  // 退出登录后跳转到登录页面
-  router.push('/login')
+const handleLogout = async () => {
+  try {
+    await logout()
+    ElMessage.success('退出登录成功')
+    // 退出登录后跳转到登录页面
+    router.push('/login')
+  } catch (error) {
+    console.error('退出登录失败:', error)
+    ElMessage.error(error instanceof Error ? error.message : '退出登录失败')
+  }
 }
 
 // 组件挂载时获取用户信息
@@ -196,21 +209,44 @@ onMounted(() => {
   padding: 20px 0;
 }
 
+.profile-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
 .profile-item {
   display: flex;
-  margin-bottom: 16px;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-item.full-width {
+  grid-column: 1 / -1;
+}
+
+.profile-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #606266;
+  margin: 0;
+}
+
+.profile-value {
+  font-size: 14px;
+  color: #303133;
+  padding: 8px 12px;
+  background-color: #f5f7fa;
+  border-radius: 6px;
+  border: 1px solid #e4e7ed;
+  min-height: 20px;
+  display: flex;
   align-items: center;
 }
 
-.profile-item label {
-  width: 100px;
-  font-weight: 600;
-  color: #606266;
-  margin-right: 16px;
-}
-
-.profile-item span {
-  color: #303133;
-  flex: 1;
+.profile-value:empty::before {
+  content: '暂无数据';
+  color: #c0c4cc;
+  font-style: italic;
 }
 </style>

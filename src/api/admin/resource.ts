@@ -1,33 +1,39 @@
-import { httpPost } from './http'
+import { useHttp } from '@/composables/useHttp'
 import type { Resource, ResourceForm, ResourceSearchForm } from '@/types/resource'
 
 // 获取资源列表
 export async function getResourceList(params?: ResourceSearchForm): Promise<Resource[]> {
+  const { httpPost } = useHttp()
   return httpPost<Resource[]>('/api/resources/list', params || {})
 }
 
 // 获取资源树
 export async function getResourceTree(): Promise<Resource[]> {
+  const { httpPost } = useHttp()
   return httpPost<Resource[]>('/api/resources/tree', {})
 }
 
 // 新增资源
 export async function createResource(resource: ResourceForm): Promise<Resource> {
+  const { httpPost } = useHttp()
   return httpPost<Resource>('/api/resources/create', resource)
 }
 
 // 更新资源
 export async function updateResource(resource: ResourceForm): Promise<Resource> {
+  const { httpPost } = useHttp()
   return httpPost<Resource>('/api/resources/update', resource)
 }
 
 // 删除资源
 export async function deleteResource(id: string | number): Promise<void> {
+  const { httpPost } = useHttp()
   return httpPost<void>('/api/resources/delete', { id })
 }
 
 // 获取资源详情
 export async function getResourceDetail(id: string | number): Promise<Resource> {
+  const { httpPost } = useHttp()
   return httpPost<Resource>('/api/resources/detail', { id })
 }
 

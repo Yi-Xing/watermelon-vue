@@ -18,11 +18,12 @@
             placeholder="请输入名称、邮箱、手机号"
             clearable
             style="width: 250px"
+            @keyup.enter="handleSearch"
           />
         </el-form-item>
         <el-form-item label="状态">
           <el-select
-            v-model="searchForm.status"
+            v-model="searchForm.state"
             placeholder="请选择状态"
             clearable
             style="width: 90px"
@@ -41,19 +42,19 @@
 
     <!-- 用户列表 -->
     <el-card class="users-table-card">
-      <el-table :data="filteredUsersList" v-loading="loading" stripe>
+      <el-table :data="usersList" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="名称" width="120" />
         <el-table-column prop="email" label="邮箱" width="200" />
         <el-table-column prop="phone" label="手机号" width="130" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="state" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'">
-              {{ row.status === 1 ? '启用' : '禁用' }}
+            <el-tag :type="row.state === 1 ? 'success' : 'danger'">
+              {{ row.state === 1 ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="updatedAt" label="更新时间" width="180" />
+        <el-table-column prop="updatedTime" label="更新时间" width="180" />
         <el-table-column label="操作" width="280">
           <template #default="{ row }">
             <div class="action-buttons">
@@ -72,15 +73,14 @@
         <el-pagination
           v-model:current-page="pagination.currentPage"
           v-model:page-size="pagination.pageSize"
-          :page-sizes="[10, 20, 50, 100]"
+          :page-sizes="[20, 50, 100]"
           :total="pagination.total"
           layout="total, sizes, prev, pager, next, jumper"
           :pager-count="7"
-          prev-text="上一页"
-          next-text="下一页"
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-        />
+          @update:page-size="handleSizeChange"
+          @update:current-page="handleCurrentChange"
+        >
+        </el-pagination>
       </div>
     </el-card>
 
@@ -103,8 +103,8 @@
         <el-form-item label="密码" prop="password" v-if="dialogType === 'add'">
           <el-input v-model="userForm.password" type="password" placeholder="请输入密码" />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="userForm.status">
+        <el-form-item label="状态" prop="state">
+          <el-radio-group v-model="userForm.state">
             <el-radio :label="1">启用</el-radio>
             <el-radio :label="2">禁用</el-radio>
           </el-radio-group>
@@ -136,7 +136,12 @@
 
     <!-- 重置密码对话框 -->
     <el-dialog v-model="resetPasswordVisible" title="重置密码" width="400px">
-      <el-form ref="resetPasswordFormRef" :model="resetPasswordForm" :rules="resetPasswordRules">
+      <el-form
+        ref="resetPasswordFormRef"
+        :model="resetPasswordForm"
+        :rules="resetPasswordRules"
+        label-width="100px"
+      >
         <el-form-item label="新密码" prop="newPassword">
           <el-input
             v-model="resetPasswordForm.newPassword"
@@ -165,15 +170,40 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
+import {
+  getUserList,
+  getUserDetail,
+  createUser,
+  updateUser,
+  deleteUser,
+  resetPassword,
+} from '@/api/admin/user'
+import type {
+  UserListItem,
+  CreateUserRequest,
+  UpdateUserRequest,
+  ResetPasswordRequest,
+  PageParams,
+} from '@/types/user'
 
 // 搜索表单
 const searchForm = reactive({
   keyword: '',
-  status: 0, // 默认选择"全部"
+  state: 0, // 默认选择"全部"，对应后端state字段
 })
+
+// 监听状态变化，自动触发搜索
+watch(
+  () => searchForm.state,
+  () => {
+    // 当选择具体状态时，自动触发搜索
+    pagination.currentPage = 1
+    loadUsers()
+  },
+)
 
 // 分页信息
 const pagination = reactive({
@@ -182,21 +212,8 @@ const pagination = reactive({
   total: 0,
 })
 
-// 用户类型定义
-interface User {
-  id: number
-  name: string
-  email: string
-  phone: string
-  status: number
-  updatedAt: string
-  remark: string
-  roleIds: number[]
-}
-
 // 用户列表
-const usersList = ref<User[]>([])
-const filteredUsersList = ref<User[]>([]) // 添加筛选后的用户列表
+const usersList = ref<UserListItem[]>([])
 const loading = ref(false)
 
 // 对话框相关
@@ -207,14 +224,14 @@ const submitting = ref(false)
 
 // 用户表单
 const userForm = reactive({
-  id: '',
+  id: 0,
   name: '',
   email: '',
   phone: '',
   password: '',
-  status: 1,
+  state: 1,
   remark: '',
-  roleIds: [],
+  roleIds: [] as number[],
 })
 
 // 角色选项
@@ -240,11 +257,15 @@ const userFormRules = {
     { min: 3, max: 10, message: '名称长度在 3 到 10 个字符', trigger: 'blur' },
   ],
   email: [
-    { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: '请输入正确的邮箱格式', trigger: 'blur' },
+    {
+      pattern: /^$|^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+      message: '请输入正确的邮箱格式',
+      trigger: 'blur',
+    },
   ],
-  phone: [{ pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号格式', trigger: 'blur' }],
+  phone: [{ pattern: /^$|^1[3-9]\d{9}$/, message: '请输入正确的手机号格式', trigger: 'blur' }],
   password: [{ min: 8, message: '密码长度不能少于8位', trigger: 'blur' }],
-  status: [{ required: true, message: '请选择状态', trigger: 'change' }],
+  state: [{ required: true, message: '请选择状态', trigger: 'change' }],
   remark: [{ max: 500, message: '备注长度不能超过500个字符', trigger: 'blur' }],
 }
 
@@ -269,91 +290,52 @@ const resetPasswordRules = {
   ],
 }
 
-// 模拟用户数据
-const mockUsers = [
-  {
-    id: 1,
-    name: '张三',
-    email: 'zhangsan@example.com',
-    phone: '13800138001',
-    status: 1,
-    updatedAt: '2024-01-15 10:30:00',
-    remark: '测试用户',
-    roleIds: [3],
-  },
-  {
-    id: 2,
-    name: '李四',
-    email: 'lisi@example.com',
-    phone: '13800138002',
-    status: 1,
-    updatedAt: '2024-01-15 09:15:00',
-    remark: '管理员',
-    roleIds: [2],
-  },
-  {
-    id: 3,
-    name: '王五',
-    email: 'wangwu@example.com',
-    phone: '13800138003',
-    status: 2,
-    updatedAt: '2024-01-15 08:00:00',
-    remark: '禁用用户',
-    roleIds: [3],
-  },
-]
-
 // 初始化数据
 onMounted(() => {
   loadUsers()
 })
 
 // 加载用户列表
-const loadUsers = () => {
+const loadUsers = async () => {
   loading.value = true
-  // 模拟API调用
-  setTimeout(() => {
-    usersList.value = mockUsers
-    applyFilters() // 应用筛选
+  try {
+    const params = {
+      keyword: searchForm.keyword || undefined,
+      pageNum: pagination.currentPage,
+      pageSize: pagination.pageSize,
+    } as PageParams
+
+    // 只有当状态不是"全部"(0)时才传递state参数
+    if (searchForm.state !== 0) {
+      params.state = searchForm.state
+    }
+
+    const response = await getUserList(params)
+
+    usersList.value = response.data.dataList
+    pagination.total = response.data.total
+    pagination.currentPage = response.data.current
+    pagination.pageSize = response.data.size
+  } catch (error) {
+    console.error('获取用户列表失败:', error)
+    ElMessage.error('获取用户列表失败')
+  } finally {
     loading.value = false
-  }, 500)
-}
-
-// 应用筛选
-const applyFilters = () => {
-  let filtered = [...usersList.value]
-
-  // 状态筛选
-  if (searchForm.status !== 0) {
-    filtered = filtered.filter((user) => user.status === searchForm.status)
   }
-
-  // 关键字筛选
-  if (searchForm.keyword.trim()) {
-    const keyword = searchForm.keyword.toLowerCase()
-    filtered = filtered.filter(
-      (user) =>
-        user.name.toLowerCase().includes(keyword) ||
-        user.email.toLowerCase().includes(keyword) ||
-        user.phone.includes(keyword),
-    )
-  }
-
-  filteredUsersList.value = filtered
-  pagination.total = filtered.length
-  pagination.currentPage = 1
 }
 
 // 搜索
 const handleSearch = () => {
-  applyFilters()
+  pagination.currentPage = 1
+  loadUsers()
 }
 
 // 重置搜索
 const handleReset = () => {
   searchForm.keyword = ''
-  searchForm.status = 0 // 重置为"全部"
-  applyFilters()
+  searchForm.state = 0
+  pagination.currentPage = 1
+  loadUsers()
 }
 
 // 新增用户
@@ -364,27 +346,58 @@ const handleAdd = () => {
 }
 
 // 编辑用户
-const handleEdit = (row: User) => {
-  dialogType.value = 'edit'
-  Object.assign(userForm, row)
-  dialogVisible.value = true
+const handleEdit = async (row: UserListItem) => {
+  try {
+    dialogType.value = 'edit'
+    loading.value = true
+
+    // 调用API获取用户详情
+    const response = await getUserDetail(row.id)
+    const userDetail = response.data
+
+    // 填充表单数据
+    Object.assign(userForm, {
+      id: userDetail.id,
+      name: userDetail.name,
+      email: userDetail.email,
+      phone: userDetail.phone,
+      password: '', // 编辑时不显示密码
+      state: userDetail.state,
+      remark: userDetail.remark,
+      roleIds: userDetail.roles || [],
+    })
+
+    dialogVisible.value = true
+  } catch (error) {
+    console.error('获取用户详情失败:', error)
+    ElMessage.error('获取用户详情失败')
+  } finally {
+    loading.value = false
+  }
 }
 
 // 删除用户
-const handleDelete = (row: User) => {
-  ElMessageBox.confirm(`是否确认删除${row.name}？`, '确认删除', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning',
-  }).then(() => {
-    // 模拟删除操作
+const handleDelete = async (row: UserListItem) => {
+  try {
+    await ElMessageBox.confirm(`是否确认删除${row.name}？`, '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+
+    await deleteUser(row.id)
     ElMessage.success('删除成功')
     loadUsers()
-  })
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除用户失败:', error)
+      ElMessage.error('删除用户失败')
+    }
+  }
 }
 
 // 重置密码
-const handleResetPassword = (row: User) => {
+const handleResetPassword = (row: UserListItem) => {
   currentUserId.value = row.id
   resetPasswordForm.newPassword = ''
   resetPasswordForm.confirmPassword = ''
@@ -399,46 +412,77 @@ const handleSubmit = async () => {
     await userFormRef.value.validate()
     submitting.value = true
 
-    // 模拟提交
-    setTimeout(() => {
-      ElMessage.success(dialogType.value === 'add' ? '新增成功' : '编辑成功')
-      dialogVisible.value = false
-      submitting.value = false
-      loadUsers()
-    }, 1000)
+    if (dialogType.value === 'add') {
+      // 新增用户
+      const createData: CreateUserRequest = {
+        name: userForm.name,
+        email: userForm.email,
+        phone: userForm.phone,
+        password: userForm.password,
+        state: userForm.state,
+        remark: userForm.remark,
+        roleIds: userForm.roleIds,
+      }
+      await createUser(createData)
+      ElMessage.success('新增成功')
+    } else {
+      // 编辑用户
+      const updateData: UpdateUserRequest = {
+        id: userForm.id,
+        name: userForm.name,
+        email: userForm.email,
+        phone: userForm.phone,
+        state: userForm.state,
+        remark: userForm.remark,
+        roleIds: userForm.roleIds,
+      }
+      await updateUser(updateData)
+      ElMessage.success('编辑成功')
+    }
+
+    dialogVisible.value = false
+    loadUsers()
   } catch (error) {
-    console.error('用户表单验证失败:', error)
+    console.error('操作失败:', error)
+    ElMessage.error(error instanceof Error ? error.message : '操作失败')
+  } finally {
+    submitting.value = false
   }
 }
 
 // 提交重置密码
 const handleResetPasswordSubmit = async () => {
-  if (!resetPasswordFormRef.value) return
+  if (!resetPasswordFormRef.value || !currentUserId.value) return
 
   try {
     await resetPasswordFormRef.value.validate()
     submitting.value = true
 
-    // 模拟提交
-    setTimeout(() => {
-      ElMessage.success('密码重置成功')
-      resetPasswordVisible.value = false
-      submitting.value = false
-    }, 1000)
+    const passwordData: ResetPasswordRequest = {
+      id: currentUserId.value,
+      password: resetPasswordForm.newPassword,
+    }
+
+    await resetPassword(passwordData)
+    ElMessage.success('密码重置成功')
+    resetPasswordVisible.value = false
   } catch (error) {
-    console.error('密码重置验证失败:', error)
+    console.error('密码重置失败:', error)
+    ElMessage.error(error instanceof Error ? error.message : '密码重置失败')
+  } finally {
+    submitting.value = false
   }
 }
 
 // 重置用户表单
 const resetUserForm = () => {
   Object.assign(userForm, {
-    id: '',
+    id: 0,
     name: '',
     email: '',
     phone: '',
     password: '',
-    status: 1,
+    state: 1,
     remark: '',
     roleIds: [],
   })

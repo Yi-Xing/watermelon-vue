@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/stores/user'
 import LoginView from '../views/LoginView.vue'
 import NotFound from '../views/NotFound.vue'
 import AdminLayout from '../layouts/AdminLayout.vue'
@@ -56,6 +57,25 @@ const router = createRouter({
       component: NotFound,
     },
   ],
+})
+
+// 全局前置守卫
+router.beforeEach((to, from, next) => {
+  // 检查是否访问admin路径
+  if (to.path.startsWith('/admin')) {
+    // 通过store检查用户是否已登录
+    const userStore = useUserStore()
+    const isLoggedIn = userStore.isLoggedIn
+
+    if (!isLoggedIn) {
+      // 未登录，跳转到登录页面
+      next('/login')
+      return
+    }
+  }
+
+  // 其他情况正常放行
+  next()
 })
 
 export default router

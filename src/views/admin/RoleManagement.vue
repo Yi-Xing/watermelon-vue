@@ -72,12 +72,10 @@
         <el-pagination
           v-model:current-page="pagination.currentPage"
           v-model:page-size="pagination.pageSize"
-          :page-sizes="[10, 20, 50, 100]"
+          :page-sizes="[20, 50, 100]"
           :total="pagination.total"
           layout="total, sizes, prev, pager, next, jumper"
           :pager-count="7"
-          prev-text="上一页"
-          next-text="下一页"
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
         />

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import AppAbout from '@/components/AppAbout.vue'
@@ -43,6 +43,16 @@ const handleLogin = async () => {
     ElMessage.error(errorMessage)
   }
 }
+
+// 检查是否有401错误提示信息
+onMounted(() => {
+  const expiredMessage = localStorage.getItem('login_expired_message')
+  if (expiredMessage) {
+    ElMessage.error(expiredMessage)
+    // 显示后清除提示信息
+    localStorage.removeItem('login_expired_message')
+  }
+})
 </script>
 
 <template>

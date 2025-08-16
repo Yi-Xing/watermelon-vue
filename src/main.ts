@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import ElementPlus from 'element-plus'
+import zhCn from 'element-plus/es/locale/lang/zh-cn'
 import 'element-plus/dist/index.css'
 
 import App from './App.vue'
@@ -18,7 +19,9 @@ app.use(createPinia())
 app.use(router)
 
 // 使用 Element Plus
-app.use(ElementPlus)
+app.use(ElementPlus, {
+  locale: zhCn,
+})
 
 // 将Vue应用挂载到DOM元素上
 // '#app'对应index.html中的<div id="app"></div>
