@@ -4,6 +4,10 @@ export interface LoginRequestPayload {
 }
 
 export interface LoginResponseData {
-  token?: string
-  [key: string]: unknown
+  code: number
+  success: boolean
+  message: string
+  data: {
+    token: string
+  }
 }

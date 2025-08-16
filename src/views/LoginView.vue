@@ -2,10 +2,11 @@
 import { ref, reactive } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
-import AboutView from './AboutView.vue'
+import AppAbout from '@/components/AppAbout.vue'
 import { User, Lock } from '@element-plus/icons-vue'
 import GitHubIcon from '@/components/icons/GitHubIcon.vue'
 import { useRouter } from 'vue-router'
+import AppHeader from '@/components/AppHeader.vue'
 
 const userStore = useUserStore()
 const loginFormRef = ref()
@@ -17,7 +18,7 @@ const loginForm = reactive({
 })
 
 const rules = {
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+  username: [{ required: true, message: '请输入手机号/邮箱', trigger: 'blur' }],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
     { min: 6, message: '密码长度不能少于6位', trigger: 'blur' },
@@ -36,8 +37,10 @@ const handleLogin = async () => {
       // 登录成功后跳转到管理后台
       router.push('/admin/dashboard')
     }
-  } catch {
-    ElMessage.error('登录失败，请检查用户名和密码')
+  } catch (error) {
+    // 如果有具体的错误信息，显示服务器返回的错误；否则显示默认错误
+    const errorMessage = error instanceof Error ? error.message : '登录失败，请检查用户名和密码'
+    ElMessage.error(errorMessage)
   }
 }
 </script>
@@ -45,19 +48,7 @@ const handleLogin = async () => {
 <template>
   <div class="login-page">
     <!-- 顶部系统导航 -->
-    <el-header class="header">
-      <div class="container header-inner">
-        <div class="logo-section">
-          <RouterLink to="/" class="logo-link">
-            <img src="/logo.webp" alt="Watermelon Logo" class="logo-icon" />
-            <h1 class="logo">Watermelon</h1>
-          </RouterLink>
-        </div>
-        <el-space>
-          <!-- 登录按钮已删除 -->
-        </el-space>
-      </div>
-    </el-header>
+    <AppHeader />
 
     <!-- 中间登录内容 - 左右两栏布局 -->
     <main class="main-content">
@@ -142,7 +133,7 @@ const handleLogin = async () => {
     <!-- 底部关于信息 - 嵌入 AboutView 组件 -->
     <footer class="footer">
       <div class="container">
-        <AboutView />
+        <AppAbout />
       </div>
     </footer>
   </div>
@@ -153,65 +144,6 @@ const handleLogin = async () => {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-}
-
-/* 顶部导航样式 */
-.header {
-  background: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-}
-
-.header-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  height: 100%;
-}
-
-.logo-section {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.logo-link {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  color: inherit;
-  gap: 12px;
-  transition: opacity 0.3s;
-}
-
-.logo-link:hover {
-  opacity: 0.8;
-}
-
-.logo-icon {
-  width: 32px;
-  height: 32px;
-  object-fit: contain;
-}
-
-.logo {
-  font-size: 24px;
-  font-weight: bold;
-  color: #62a2f0;
-  margin: 0;
-}
-
-.header-inner a {
-  color: #495057;
-  text-decoration: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  transition: all 0.3s;
-}
-
-.header-inner a:hover {
-  color: #62a2f0;
-  background: rgba(98, 162, 240, 0.1);
 }
 
 /* 中间登录内容样式 - 左右两栏布局 */

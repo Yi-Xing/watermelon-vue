@@ -1,9 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../views/LoginView.vue'
-import AdminLayout from '../views/admin/AdminLayout.vue'
+import NotFound from '../views/NotFound.vue'
+import AdminLayout from '../layouts/AdminLayout.vue'
 import AdminDashboard from '../views/admin/AdminDashboard.vue'
 import UserManagement from '../views/admin/UserManagement.vue'
-import Roles from '../views/admin/Roles.vue'
+import RoleManagement from '../views/admin/RoleManagement.vue'
 import ResourceManagement from '../views/admin/ResourceManagement.vue'
 
 const router = createRouter({
@@ -39,7 +40,7 @@ const router = createRouter({
         {
           path: 'roles',
           name: 'admin-roles',
-          component: Roles,
+          component: RoleManagement,
         },
         {
           path: 'resources',
@@ -47,6 +48,12 @@ const router = createRouter({
           component: ResourceManagement,
         },
       ],
+    },
+    // 404 页面 - 必须放在最后，作为通配符路由
+    {
+      path: '/:pathMatch(.*)*',
+      name: 'not-found',
+      component: NotFound,
     },
   ],
 })
