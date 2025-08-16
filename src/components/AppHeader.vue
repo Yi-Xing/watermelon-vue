@@ -3,7 +3,7 @@
     <div class="container header-inner">
       <div class="logo-section">
         <RouterLink to="/" class="logo-link">
-          <img src="/logo.webp" alt="Watermelon Logo" class="logo-icon" />
+          <img src="@/assets/logo.webp" alt="Watermelon Logo" class="logo-icon" />
           <h1 class="logo">Watermelon</h1>
         </RouterLink>
       </div>

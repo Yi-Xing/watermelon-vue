@@ -1,5 +1,5 @@
 import { useHttp } from '@/composables/useHttp'
-import { useUserStore } from '@/stores/user'
+import { useApi } from '@/composables/useApi'
 import type {
   CreateRoleRequest,
   CreateRoleResponse,
@@ -16,14 +16,10 @@ import type {
 
 // 创建角色
 export async function createRole(roleData: CreateRoleRequest): Promise<CreateRoleResponse> {
-  const userStore = useUserStore()
+  const { getAuthToken } = useApi()
   const { httpPost } = useHttp()
-  const token = userStore.getToken
 
-  if (!token) {
-    throw new Error('用户未登录')
-  }
-
+  const token = getAuthToken()
   const response = await httpPost<CreateRoleResponse>('/api/role', roleData, token)
 
   if (response.code === 200) {
@@ -35,22 +31,18 @@ export async function createRole(roleData: CreateRoleRequest): Promise<CreateRol
 
 // 查询角色列表
 export async function getRoleList(params: RolePageParams): Promise<RoleListResponse> {
-  const userStore = useUserStore()
+  const { getAuthToken, buildQueryParams } = useApi()
   const { httpGet } = useHttp()
-  const token = userStore.getToken
 
-  if (!token) {
-    throw new Error('用户未登录')
-  }
+  const token = getAuthToken()
+  const queryString = buildQueryParams({
+    name: params.name,
+    state: params.state,
+    pageNum: params.pageNum,
+    pageSize: params.pageSize,
+  })
 
-  // 构建查询参数
-  const queryParams = new URLSearchParams()
-  if (params.name) queryParams.append('name', params.name)
-  if (params.state !== undefined) queryParams.append('state', params.state.toString())
-  queryParams.append('pageNum', params.pageNum.toString())
-  queryParams.append('pageSize', params.pageSize.toString())
-
-  const url = `/api/role/list?${queryParams.toString()}`
+  const url = `/api/role/list${queryString}`
   const response = await httpGet<RoleListResponse>(url, token)
 
   if (response.code === 200) {
@@ -62,14 +54,10 @@ export async function getRoleList(params: RolePageParams): Promise<RoleListRespo
 
 // 获取角色详情
 export async function getRoleDetail(roleId: number): Promise<RoleDetailResponse> {
-  const userStore = useUserStore()
+  const { getAuthToken } = useApi()
   const { httpGet } = useHttp()
-  const token = userStore.getToken
 
-  if (!token) {
-    throw new Error('用户未登录')
-  }
-
+  const token = getAuthToken()
   const response = await httpGet<RoleDetailResponse>(`/api/role/${roleId}`, token)
 
   if (response.code === 200) {
@@ -81,14 +69,10 @@ export async function getRoleDetail(roleId: number): Promise<RoleDetailResponse>
 
 // 更新角色
 export async function updateRole(roleData: UpdateRoleRequest): Promise<UpdateRoleResponse> {
-  const userStore = useUserStore()
+  const { getAuthToken } = useApi()
   const { httpPut } = useHttp()
-  const token = userStore.getToken
 
-  if (!token) {
-    throw new Error('用户未登录')
-  }
-
+  const token = getAuthToken()
   const response = await httpPut<UpdateRoleResponse>('/api/role', roleData, token)
 
   if (response.code === 200) {
@@ -100,14 +84,10 @@ export async function updateRole(roleData: UpdateRoleRequest): Promise<UpdateRol
 
 // 删除角色
 export async function deleteRole(roleId: number): Promise<DeleteRoleResponse> {
-  const userStore = useUserStore()
+  const { getAuthToken } = useApi()
   const { httpDelete } = useHttp()
-  const token = userStore.getToken
 
-  if (!token) {
-    throw new Error('用户未登录')
-  }
-
+  const token = getAuthToken()
   const response = await httpDelete<DeleteRoleResponse>(`/api/role/${roleId}`, token)
 
   if (response.code === 200) {
@@ -119,14 +99,10 @@ export async function deleteRole(roleId: number): Promise<DeleteRoleResponse> {
 
 // 获取角色资源
 export async function getRoleResources(roleId: number): Promise<GetRoleResourcesResponse> {
-  const userStore = useUserStore()
+  const { getAuthToken } = useApi()
   const { httpGet } = useHttp()
-  const token = userStore.getToken
 
-  if (!token) {
-    throw new Error('用户未登录')
-  }
-
+  const token = getAuthToken()
   const response = await httpGet<GetRoleResourcesResponse>(`/api/role/${roleId}/resources`, token)
 
   if (response.code === 200) {
@@ -141,14 +117,10 @@ export async function updateRoleResources(
   roleId: number,
   resourceIds: number[],
 ): Promise<UpdateRoleResourcesResponse> {
-  const userStore = useUserStore()
+  const { getAuthToken } = useApi()
   const { httpPut } = useHttp()
-  const token = userStore.getToken
 
-  if (!token) {
-    throw new Error('用户未登录')
-  }
-
+  const token = getAuthToken()
   const requestData: UpdateRoleResourcesRequest = {
     roleId,
     resourceIds,

@@ -8,13 +8,7 @@
       </el-icon>
     </div>
 
-    <el-menu
-      :default-active="activeMenu"
-      class="sidebar-menu"
-      @select="handleMenuSelect"
-      router
-      :collapse="isCollapsed"
-    >
+    <el-menu :default-active="activeMenu" class="sidebar-menu" router :collapse="isCollapsed">
       <el-menu-item index="/admin/dashboard">
         <el-icon><DataBoard /></el-icon>
         <span>仪表盘</span>
@@ -37,8 +31,14 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { ElMessage } from 'element-plus'
-import { User, UserFilled, Files, DataBoard, ArrowRightBold, ArrowLeftBold } from '@element-plus/icons-vue'
+import {
+  User,
+  UserFilled,
+  Files,
+  DataBoard,
+  ArrowRightBold,
+  ArrowLeftBold,
+} from '@element-plus/icons-vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -48,11 +48,6 @@ const isCollapsed = ref(false)
 
 // 根据当前路由计算激活的菜单项
 const activeMenu = computed(() => route.path)
-
-// 菜单选择处理
-const handleMenuSelect = (index: string) => {
-  ElMessage.info(`切换到${index}页面`)
-}
 
 // 切换侧边栏折叠状态
 const toggleCollapse = () => {

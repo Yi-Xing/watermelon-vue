@@ -12,9 +12,9 @@
           <el-icon><Upload /></el-icon>
           导入
         </el-button>
-        <el-button @click="handleExport">
+        <el-button @click="handleExport" :loading="exporting">
           <el-icon><Download /></el-icon>
-          导出
+          {{ exporting ? '导出中...' : '导出' }}
         </el-button>
       </div>
     </div>
@@ -22,12 +22,15 @@
     <!-- 搜索区域 -->
     <el-card class="search-card">
       <el-form :model="searchForm" inline>
-        <el-form-item label="名称搜索">
+        <el-form-item label="资源名称">
           <el-input
             v-model="searchForm.name"
             placeholder="请输入资源名称"
             clearable
             style="width: 200px"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+            @input="handleSearch"
           />
         </el-form-item>
         <el-form-item label="资源Code">
@@ -36,14 +39,18 @@
             placeholder="请输入资源Code"
             clearable
             style="width: 200px"
+            @keyup.enter="handleSearch"
+            @clear="handleSearch"
+            @input="handleSearch"
           />
         </el-form-item>
         <el-form-item label="状态">
           <el-select
-            v-model="searchForm.status"
+            v-model="searchForm.state"
             placeholder="请选择状态"
             clearable
             style="width: 100px"
+            @change="handleSearch"
           >
             <el-option label="全部" :value="0" />
             <el-option label="启用" :value="ResourceStatus.ENABLED" />
@@ -60,15 +67,15 @@
     <!-- 资源列表 -->
     <el-card class="resources-table-card">
       <el-table
-        :data="filteredResourcesList"
+        :data="resourcesList"
         v-loading="loading"
         stripe
         row-key="id"
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         default-expand-all
       >
-        <el-table-column prop="id" label="ID" :width="idColumnWidth" />
-        <el-table-column prop="name" label="名称" width="150" />
+        <el-table-column prop="name" label="名称" :width="nameColumnWidth" />
+        <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="type" label="类型" width="100">
           <template #default="{ row }">
             <el-tag :type="getTypeTagType(row.type)">
@@ -76,12 +83,12 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="code" label="资源Code" width="180" />
-        <el-table-column prop="sort" label="显示顺序" width="100" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="code" label="资源Code" width="300" />
+        <el-table-column prop="orderNum" label="显示顺序" width="100" />
+        <el-table-column prop="state" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === ResourceStatus.ENABLED ? 'success' : 'danger'">
-              {{ row.status === ResourceStatus.ENABLED ? '启用' : '禁用' }}
+            <el-tag :type="row.state === ResourceStatus.ENABLED ? 'success' : 'danger'">
+              {{ row.state === ResourceStatus.ENABLED ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
@@ -133,11 +140,11 @@
         <el-form-item label="资源Code" prop="code">
           <el-input v-model="resourceForm.code" placeholder="请输入资源Code" />
         </el-form-item>
-        <el-form-item label="显示顺序" prop="sort">
-          <el-input-number v-model="resourceForm.sort" :min="1" style="width: 100%" />
+        <el-form-item label="显示顺序" prop="orderNum">
+          <el-input-number v-model="resourceForm.orderNum" :min="1" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="resourceForm.status">
+        <el-form-item label="状态" prop="state">
+          <el-radio-group v-model="resourceForm.state">
             <el-radio :label="ResourceStatus.ENABLED">启用</el-radio>
             <el-radio :label="ResourceStatus.DISABLED">禁用</el-radio>
           </el-radio-group>
@@ -173,6 +180,48 @@
         <el-button type="primary" @click="confirmParentSelect">确定</el-button>
       </template>
     </el-dialog>
+
+    <!-- 导入结果弹窗 -->
+    <el-dialog
+      v-model="importResultVisible"
+      title="导入结果"
+      width="800px"
+      :close-on-click-modal="false"
+      :close-on-press-escape="false"
+    >
+      <div class="import-result">
+        <h3>导入完成！</h3>
+        <div class="result-stats" v-if="importResult.success">
+          <div class="stat-item">
+            <span class="stat-label">总行数</span>
+            <span class="stat-value">{{ importResult.totalRows }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">新增行数</span>
+            <span class="stat-value success">{{ importResult.insertedRows }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">更新行数</span>
+            <span class="stat-value warning">{{ importResult.updatedRows }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">删除行数</span>
+            <span class="stat-value danger">{{ importResult.deletedRows }}</span>
+          </div>
+        </div>
+        <div v-if="!importResult.success" class="error-section">
+          <h4>错误信息</h4>
+          <div class="error-list">
+            <div v-for="(error, index) in importResult.errors" :key="index" class="error-item">
+              {{ error }}
+            </div>
+          </div>
+        </div>
+      </div>
+      <template #footer>
+        <el-button type="primary" @click="importResultVisible = false">确定</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
@@ -183,17 +232,17 @@ import { Plus, Upload, Download } from '@element-plus/icons-vue'
 import type { Resource, ResourceForm, ResourceSearchForm, ResourceTreeNode } from '@/types/resource'
 import { ResourceType, ResourceStatus } from '@/types/resource'
 import * as resourceApi from '@/api/admin/resource'
+import type { CreateResourceRequest, UpdateResourceRequest } from '@/types/resource'
 
 // 搜索表单
 const searchForm = reactive<ResourceSearchForm>({
   name: '',
   code: '',
-  status: 0, // 默认选择"全部"
+  state: 0, // 默认选择"全部"
 })
 
 // 资源列表
 const resourcesList = ref<Resource[]>([])
-const filteredResourcesList = ref<Resource[]>([])
 const loading = ref(false)
 
 // 对话框相关
@@ -201,6 +250,9 @@ const dialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit'>('add')
 const resourceFormRef = ref()
 const submitting = ref(false)
+
+// 导出状态控制
+const exporting = ref(false)
 
 // 资源表单
 const resourceForm = reactive<ResourceForm>({
@@ -210,8 +262,8 @@ const resourceForm = reactive<ResourceForm>({
   name: '',
   type: ResourceType.PAGE,
   code: '',
-  sort: 1,
-  status: ResourceStatus.ENABLED,
+  orderNum: 1,
+  state: ResourceStatus.ENABLED,
   remark: '',
 })
 
@@ -219,6 +271,24 @@ const resourceForm = reactive<ResourceForm>({
 const showParentSelector = ref(false)
 const selectedParent = ref<ResourceTreeNode | null>(null)
 const resourcesTree = ref<ResourceTreeNode[]>([])
+
+// 导入结果弹窗
+const importResultVisible = ref(false)
+const importResult = ref<{
+  totalRows: number
+  insertedRows: number
+  updatedRows: number
+  deletedRows: number
+  errors: string[] | null
+  success: boolean
+}>({
+  totalRows: 0,
+  insertedRows: 0,
+  updatedRows: 0,
+  deletedRows: 0,
+  errors: null,
+  success: false,
+})
 
 // 表单验证规则
 const resourceFormRules = {
@@ -231,72 +301,10 @@ const resourceFormRules = {
     { required: true, message: '请输入资源Code', trigger: 'blur' },
     { min: 1, max: 100, message: '资源Code长度在 1 到 100 个字符', trigger: 'blur' },
   ],
-  sort: [{ required: true, message: '请输入显示顺序', trigger: 'blur' }],
-  status: [{ required: true, message: '请选择状态', trigger: 'change' }],
+  orderNum: [{ required: true, message: '请输入显示顺序', trigger: 'blur' }],
+  state: [{ required: true, message: '请选择状态', trigger: 'change' }],
   remark: [{ max: 500, message: '备注长度不能超过500个字符', trigger: 'blur' }],
 }
-
-// 模拟资源数据
-const mockResources: Resource[] = [
-  {
-    id: 1,
-    name: '系统管理',
-    type: ResourceType.PAGE,
-    code: 'system',
-    sort: 1,
-    status: ResourceStatus.ENABLED,
-    remark: '系统管理模块',
-    children: [
-      {
-        id: 2,
-        name: '用户管理',
-        type: ResourceType.PAGE,
-        code: 'system:user',
-        sort: 1,
-        status: ResourceStatus.ENABLED,
-        remark: '用户管理页面',
-        children: [
-          {
-            id: 3,
-            name: '新增用户',
-            type: ResourceType.BUTTON,
-            code: 'system:user:add',
-            sort: 1,
-            status: ResourceStatus.ENABLED,
-            remark: '新增用户按钮',
-          },
-          {
-            id: 4,
-            name: '编辑用户',
-            type: ResourceType.BUTTON,
-            code: 'system:user:edit',
-            sort: 2,
-            status: ResourceStatus.ENABLED,
-            remark: '编辑用户按钮',
-          },
-        ],
-      },
-      {
-        id: 5,
-        name: '角色管理',
-        type: ResourceType.PAGE,
-        code: 'system:role',
-        sort: 2,
-        status: ResourceStatus.ENABLED,
-        remark: '角色管理页面',
-      },
-    ],
-  },
-  {
-    id: 6,
-    name: '内容管理',
-    type: ResourceType.PAGE,
-    code: 'content',
-    sort: 2,
-    status: ResourceStatus.ENABLED,
-    remark: '内容管理模块',
-  },
-]
 
 // 初始化数据
 onMounted(() => {
@@ -307,101 +315,37 @@ onMounted(() => {
 const loadResources = async () => {
   loading.value = true
   try {
-    const resources = await resourceApi.getResourceTree()
-    resourcesList.value = resources
-    resourcesTree.value = [{ id: 0, name: '顶级资源', children: resources }]
-    applyFilters()
+    const response = await resourceApi.getResourceTree({
+      name: searchForm.name,
+      code: searchForm.code,
+      state: searchForm.state,
+    })
+    if (response.success && response.data) {
+      resourcesList.value = response.data
+      resourcesTree.value = [{ id: 0, name: '顶级资源', children: response.data }]
+    } else {
+      throw new Error(response.message || '获取资源列表失败')
+    }
   } catch (error) {
-    // 记录错误信息
     console.error('加载资源失败:', error)
-    // 如果API调用失败，使用模拟数据
-    resourcesList.value = mockResources
-    resourcesTree.value = [{ id: 0, name: '顶级资源', children: mockResources }]
-    applyFilters()
-    ElMessage.warning('使用模拟数据，API调用失败')
+    ElMessage.error(error instanceof Error ? error.message : '获取资源列表失败')
   } finally {
     loading.value = false
   }
 }
 
-// 应用筛选
-const applyFilters = () => {
-  let filtered = [...resourcesList.value]
-
-  // 状态筛选
-  if (searchForm.status !== 0) {
-    filtered = filterByStatus(filtered, searchForm.status)
-  }
-
-  // 名称筛选
-  if (searchForm.name.trim()) {
-    filtered = filterByName(filtered, searchForm.name)
-  }
-
-  // Code筛选
-  if (searchForm.code.trim()) {
-    filtered = filterByCode(filtered, searchForm.code)
-  }
-
-  filteredResourcesList.value = filtered
-}
-
-// 按状态筛选
-const filterByStatus = (resources: Resource[], status: number): Resource[] => {
-  return resources
-    .map((resource) => {
-      if (resource.children) {
-        const filteredChildren = filterByStatus(resource.children, status)
-        if (filteredChildren.length > 0) {
-          return { ...resource, children: filteredChildren }
-        }
-      }
-      return resource.status === status ? resource : null
-    })
-    .filter(Boolean) as Resource[]
-}
-
-// 按名称筛选
-const filterByName = (resources: Resource[], name: string): Resource[] => {
-  return resources
-    .map((resource) => {
-      if (resource.children) {
-        const filteredChildren = filterByName(resource.children, name)
-        if (filteredChildren.length > 0) {
-          return { ...resource, children: filteredChildren }
-        }
-      }
-      return resource.name.toLowerCase().includes(name.toLowerCase()) ? resource : null
-    })
-    .filter(Boolean) as Resource[]
-}
-
-// 按Code筛选
-const filterByCode = (resources: Resource[], code: string): Resource[] => {
-  return resources
-    .map((resource) => {
-      if (resource.children) {
-        const filteredChildren = filterByCode(resource.children, code)
-        if (filteredChildren.length > 0) {
-          return { ...resource, children: filteredChildren }
-        }
-      }
-      return resource.code.toLowerCase().includes(code.toLowerCase()) ? resource : null
-    })
-    .filter(Boolean) as Resource[]
-}
-
 // 搜索
 const handleSearch = () => {
-  applyFilters()
+  console.log('搜索条件:', searchForm)
+  loadResources()
 }
 
 // 重置搜索
 const handleReset = () => {
   searchForm.name = ''
   searchForm.code = ''
-  searchForm.status = 0
-  applyFilters()
+  searchForm.state = 0
+  loadResources()
 }
 
 // 新增资源
@@ -412,39 +356,64 @@ const handleAdd = () => {
 }
 
 // 编辑资源
-const handleEdit = (row: Resource) => {
-  dialogType.value = 'edit'
-  Object.assign(resourceForm, {
-    id: row.id,
-    parentId: row.parentId || '',
-    parentName: row.parentName || '',
-    name: row.name,
-    type: row.type,
-    code: row.code,
-    sort: row.sort,
-    status: row.status,
-    remark: row.remark || '',
-  })
-  dialogVisible.value = true
+const handleEdit = async (row: Resource) => {
+  try {
+    dialogType.value = 'edit'
+    loading.value = true
+
+    // 调用API获取资源详情
+    const response = await resourceApi.getResourceDetail(row.id)
+    if (response.success && response.data) {
+      const resourceDetail = response.data
+
+      // 填充表单数据
+      Object.assign(resourceForm, {
+        id: resourceDetail.id,
+        parentId: resourceDetail.parentId || 0,
+        parentName: resourceDetail.parentId === 0 ? '顶级资源' : resourceDetail.parentName || '',
+        name: resourceDetail.name,
+        type: resourceDetail.type,
+        code: resourceDetail.code,
+        orderNum: resourceDetail.orderNum,
+        state: resourceDetail.state,
+        remark: resourceDetail.remark || '',
+      })
+
+      dialogVisible.value = true
+    } else {
+      throw new Error(response.message || '获取资源详情失败')
+    }
+  } catch (error) {
+    console.error('获取资源详情失败:', error)
+    ElMessage.error(error instanceof Error ? error.message : '获取资源详情失败')
+  } finally {
+    loading.value = false
+  }
 }
 
 // 删除资源
-const handleDelete = (row: Resource) => {
+const handleDelete = async (row: Resource) => {
   const fullPath = getResourceFullPath(row)
-  ElMessageBox.confirm(`是否确认删除资源："${fullPath}"？`, '确认删除', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning',
-  }).then(async () => {
-    try {
-      await resourceApi.deleteResource(row.id)
-      ElMessage.success('删除成功')
-      loadResources()
-    } catch (error) {
+
+  try {
+    await ElMessageBox.confirm(`是否确认删除资源："${fullPath}"？`, '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
+    })
+
+    loading.value = true
+    await resourceApi.deleteResource(row.id)
+    ElMessage.success(`资源"${row.name}"删除成功`)
+    loadResources()
+  } catch (error) {
+    if (error !== 'cancel') {
       console.error('删除资源失败:', error)
-      ElMessage.error('删除失败')
+      ElMessage.error(error instanceof Error ? error.message : '删除资源失败')
     }
-  })
+  } finally {
+    loading.value = false
+  }
 }
 
 // 获取资源全路径
@@ -496,6 +465,21 @@ const findResourceById = (resources: Resource[], id: string | number): Resource 
   return null
 }
 
+// 显示导入结果
+const showImportResult = (data: {
+  totalRows: number
+  insertedRows: number
+  updatedRows: number
+  deletedRows: number
+  errors: string[] | null
+  success: boolean
+}) => {
+  // 更新导入结果数据
+  importResult.value = { ...data }
+  // 显示弹窗
+  importResultVisible.value = true
+}
+
 // 导入
 const handleImport = () => {
   const input = document.createElement('input')
@@ -505,12 +489,25 @@ const handleImport = () => {
     const file = (event.target as HTMLInputElement).files?.[0]
     if (file) {
       try {
-        await resourceApi.importResources(file)
-        ElMessage.success('导入成功')
-        loadResources()
+        loading.value = true
+        ElMessage.info('正在导入资源数据...')
+
+        const result = await resourceApi.importResources(file)
+
+        if (result.success) {
+          // 显示导入结果
+          showImportResult(result.data)
+          ElMessage.success('导入成功')
+          // 刷新资源列表
+          loadResources()
+        } else {
+          ElMessage.error(result.message || '导入失败')
+        }
       } catch (error) {
         console.error('导入资源失败:', error)
-        ElMessage.error('导入失败')
+        ElMessage.error(error instanceof Error ? error.message : '导入失败')
+      } finally {
+        loading.value = false
       }
     }
   }
@@ -519,20 +516,37 @@ const handleImport = () => {
 
 // 导出
 const handleExport = async () => {
+  // 防重点击
+  if (exporting.value) {
+    return
+  }
+
   try {
-    const blob = await resourceApi.exportResources(searchForm)
+    exporting.value = true
+    ElMessage.info('正在导出资源数据...')
+
+    const blob = await resourceApi.exportResources({
+      name: searchForm.name,
+      code: searchForm.code,
+      state: searchForm.state,
+    })
+
+    // 创建下载链接
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
-    a.download = `resources_${new Date().getTime()}.xlsx`
+    a.download = `resources_${new Date().toISOString().slice(0, 10)}_${new Date().getTime()}.xlsx`
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
     window.URL.revokeObjectURL(url)
+
     ElMessage.success('导出成功')
   } catch (error) {
     console.error('导出资源失败:', error)
-    ElMessage.error('导出失败')
+    ElMessage.error(error instanceof Error ? error.message : '导出失败')
+  } finally {
+    exporting.value = false
   }
 }
 
@@ -561,11 +575,30 @@ const handleSubmit = async () => {
     submitting.value = true
 
     if (dialogType.value === 'add') {
-      await resourceApi.createResource(resourceForm)
+      const createData: CreateResourceRequest = {
+        parentId: Number(resourceForm.parentId),
+        name: resourceForm.name,
+        type: resourceForm.type,
+        code: resourceForm.code,
+        orderNum: resourceForm.orderNum,
+        state: resourceForm.state,
+        remark: resourceForm.remark,
+      }
+      await resourceApi.createResource(createData)
       ElMessage.success('新增成功')
     } else {
-      await resourceApi.updateResource(resourceForm)
-      ElMessage.success('编辑成功')
+      const updateData: UpdateResourceRequest = {
+        id: Number(resourceForm.id),
+        parentId: Number(resourceForm.parentId),
+        name: resourceForm.name,
+        type: resourceForm.type,
+        code: resourceForm.code,
+        orderNum: resourceForm.orderNum,
+        state: resourceForm.state,
+        remark: resourceForm.remark,
+      }
+      await resourceApi.updateResource(updateData)
+      ElMessage.success(`资源"${updateData.name}"更新成功`)
     }
 
     dialogVisible.value = false
@@ -573,7 +606,8 @@ const handleSubmit = async () => {
     loadResources()
   } catch (error) {
     console.error(dialogType.value === 'add' ? '新增资源失败:' : '编辑资源失败:', error)
-    ElMessage.error(dialogType.value === 'add' ? '新增失败' : '编辑失败')
+    const action = dialogType.value === 'add' ? '新增' : '编辑'
+    ElMessage.error(error instanceof Error ? error.message : `${action}资源失败`)
     submitting.value = false
   }
 }
@@ -587,8 +621,8 @@ const resetResourceForm = () => {
     code: '',
     name: '',
     type: ResourceType.PAGE,
-    sort: 1,
-    status: ResourceStatus.ENABLED,
+    orderNum: 1,
+    state: ResourceStatus.ENABLED,
     remark: '',
   })
 }
@@ -621,14 +655,6 @@ const getTypeLabel = (type: ResourceType) => {
   }
 }
 
-// 计算ID列宽度 - 根据最大层级自适应
-const idColumnWidth = computed(() => {
-  const baseWidth = 80 // 基础宽度
-  const levelWidth = 20 // 每层缩进宽度
-  const maxLevel = getMaxLevel(resourcesList.value)
-  return baseWidth + maxLevel * levelWidth
-})
-
 // 获取资源树的最大层级
 const getMaxLevel = (resources: Resource[], currentLevel = 0): number => {
   if (!resources || resources.length === 0) return currentLevel
@@ -642,6 +668,14 @@ const getMaxLevel = (resources: Resource[], currentLevel = 0): number => {
   }
   return maxLevel
 }
+
+// 计算名称列宽度 - 根据最大层级自适应
+const nameColumnWidth = computed(() => {
+  const baseWidth = 150 // 基础宽度
+  const levelWidth = 24 // 每层缩进宽度
+  const maxLevel = getMaxLevel(resourcesList.value)
+  return baseWidth + maxLevel * levelWidth
+})
 </script>
 
 <style scoped>
@@ -684,6 +718,179 @@ const getMaxLevel = (resources: Resource[], currentLevel = 0): number => {
   overflow-y: auto;
 }
 
+/* 确保对话框显示在最上层 */
+.el-dialog {
+  z-index: 2999 !important;
+}
+
+/* 导入结果弹窗样式 */
+.import-result {
+  text-align: center;
+  padding: 20px;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.import-result h3 {
+  color: #67c23a;
+  margin-bottom: 24px;
+  font-size: 22px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.import-result h3::before {
+  content: '✓';
+  background: #67c23a;
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.result-stats {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  border: 1px solid #e8eaed;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+  min-height: 120px;
+  justify-content: center;
+}
+
+.stat-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #67c23a, #409eff);
+}
+
+.stat-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+}
+
+.stat-label {
+  font-weight: 500;
+  color: #606266;
+  font-size: 14px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  font-weight: 700;
+  font-size: 24px;
+  color: #303133;
+}
+
+.stat-value.success {
+  color: #67c23a;
+  text-shadow: 0 1px 2px rgba(103, 194, 58, 0.2);
+}
+
+.stat-value.warning {
+  color: #e6a23c;
+  text-shadow: 0 1px 2px rgba(230, 162, 60, 0.2);
+}
+
+.stat-value.danger {
+  color: #f56c6c;
+  text-shadow: 0 1px 2px rgba(245, 108, 108, 0.2);
+}
+
+.error-section {
+  text-align: left;
+  margin-top: 24px;
+  padding: 20px;
+  background: #fef7f7;
+  border-radius: 10px;
+  border: 1px solid #fde2e2;
+}
+
+.error-section h4 {
+  color: #f56c6c;
+  margin-bottom: 16px;
+  font-size: 16px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.error-section h4::before {
+  content: '⚠';
+  font-size: 18px;
+}
+
+.error-list {
+  max-height: 200px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.error-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.error-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 3px;
+}
+
+.error-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.error-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.error-item {
+  background: white;
+  color: #f56c6c;
+  padding: 12px 16px;
+  margin-bottom: 10px;
+  border-radius: 8px;
+  border-left: 4px solid #f56c6c;
+  font-size: 13px;
+  line-height: 1.5;
+  box-shadow: 0 1px 4px rgba(245, 108, 108, 0.1);
+  transition: all 0.2s ease;
+}
+
+.error-item:hover {
+  background: #fef0f0;
+  transform: translateX(2px);
+}
+
 /* 响应式设计 */
 @media (max-width: 768px) {
   .page-header {
@@ -704,6 +911,17 @@ const getMaxLevel = (resources: Resource[], currentLevel = 0): number => {
 
   .search-card .el-form-item {
     margin-bottom: 15px;
+  }
+
+  /* 移动端统计卡片改为单列 */
+  .result-stats {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .stat-item {
+    padding: 20px 16px;
+    min-height: 100px;
   }
 }
 </style>

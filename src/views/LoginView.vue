@@ -67,7 +67,7 @@ onMounted(() => {
         <div class="login-form-section">
           <div class="login-box">
             <h2 class="login-title">
-              <img src="/logo.webp" alt="Watermelon Logo" class="title-logo" />
+              <img src="@/assets/logo.webp" alt="Watermelon Logo" class="title-logo" />
               登录
             </h2>
 

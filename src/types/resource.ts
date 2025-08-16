@@ -18,25 +18,35 @@ export interface Resource {
   parentName?: string
   name: string
   type: ResourceType
+  typeDesc: string // 资源类型描述
   code: string
-  sort: number
-  status: ResourceStatus
+  orderNum: number // 改为orderNum与后端一致
+  state: number // 改为state与后端一致
+  stateDesc: string // 状态描述
   remark?: string
   children?: Resource[]
-  createdAt?: string
-  updatedAt?: string
+  createdBy?: {
+    id: number
+    name: string
+  }
+  createdTime?: string
+  updatedBy?: {
+    id: number
+    name: string
+  }
+  updatedTime?: string
 }
 
 // 资源表单接口
 export interface ResourceForm {
-  id: string | number
+  id?: string | number
   parentId: string | number
-  parentName: string
+  parentName?: string
   name: string
   type: ResourceType
   code: string
-  sort: number
-  status: ResourceStatus
+  orderNum: number // 改为orderNum与后端一致
+  state: number // 改为state与后端一致
   remark: string
 }
 
@@ -44,7 +54,7 @@ export interface ResourceForm {
 export interface ResourceSearchForm {
   name: string
   code: string
-  status: number // 0: 全部, 1: 启用, 2: 禁用
+  state: number // 改为state与后端一致，0: 全部, 1: 启用, 2: 禁用
 }
 
 // 资源树节点接口
@@ -52,4 +62,56 @@ export interface ResourceTreeNode {
   id: string | number
   name: string
   children?: ResourceTreeNode[]
+}
+
+// API响应类型
+export interface ApiResponse<T = unknown> {
+  code: number
+  success: boolean
+  message: string
+  data?: T
+}
+
+// 创建资源请求
+export interface CreateResourceRequest {
+  parentId: number
+  name: string
+  type: number
+  code: string
+  orderNum: number
+  state: number
+  remark: string
+}
+
+// 创建资源响应
+export interface CreateResourceResponse {
+  code: number
+  success: boolean
+  message: string
+}
+
+// 更新资源请求
+export interface UpdateResourceRequest {
+  id: number
+  parentId: number
+  name: string
+  type: number
+  code: string
+  orderNum: number
+  state: number
+  remark: string
+}
+
+// 更新资源响应
+export interface UpdateResourceResponse {
+  code: number
+  success: boolean
+  message: string
+}
+
+// 删除资源响应
+export interface DeleteResourceResponse {
+  code: number
+  success: boolean
+  message: string
 }

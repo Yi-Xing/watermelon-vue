@@ -3,14 +3,14 @@
     <div class="header-content">
       <div class="logo-section">
         <RouterLink to="/admin/dashboard" class="logo-link">
-          <img src="/logo.webp" alt="Watermelon Logo" class="logo-icon" />
+          <img src="@/assets/logo.webp" alt="Watermelon Logo" class="logo-icon" />
           <h1 class="logo">Watermelon</h1>
         </RouterLink>
       </div>
       <div class="user-info">
         <el-dropdown>
           <span class="user-dropdown">
-            <el-avatar :size="32" :src="userAvatar" />
+            <el-avatar :size="32" :src="avatarSrc" />
             <span class="username">{{ currentUser.name }}</span>
             <el-icon><ArrowDown /></el-icon>
           </span>
@@ -72,8 +72,12 @@ import { ArrowDown } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
 import { getCurrentUser, logout } from '@/api/admin/user'
 import type { CurrentUser } from '@/types/user'
+import DefaultAvatar from '@/assets/DefaultAvatar.png'
 
 const router = useRouter()
+
+// 头像图片路径
+const avatarSrc = DefaultAvatar
 
 // 当前用户信息
 const currentUser = reactive<CurrentUser>({
@@ -86,7 +90,6 @@ const currentUser = reactive<CurrentUser>({
   updatedTime: '',
 })
 
-const userAvatar = ref('/DefaultAvatar.png')
 const profileDialogVisible = ref(false)
 
 // 获取当前用户信息
@@ -248,5 +251,46 @@ onMounted(() => {
   content: '暂无数据';
   color: #c0c4cc;
   font-style: italic;
+}
+
+/* 移除蓝色框和焦点样式 */
+.el-dropdown:focus,
+.el-dropdown:focus-visible,
+.el-dropdown:focus-within {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.el-dropdown .el-dropdown-link:focus,
+.el-dropdown .el-dropdown-link:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.user-dropdown:focus,
+.user-dropdown:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* 移除Element Plus组件的默认焦点样式 */
+.el-avatar:focus,
+.el-avatar:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* 移除链接的默认焦点样式 */
+.logo-link:focus,
+.logo-link:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* 移除图片的默认焦点样式 */
+.logo-icon:focus,
+.logo-icon:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 </style>

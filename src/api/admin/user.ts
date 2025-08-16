@@ -1,5 +1,5 @@
 import { useHttp } from '@/composables/useHttp'
-import { useUserStore } from '@/stores/user'
+import { useApi } from '@/composables/useApi'
 import type {
   CurrentUser,
   ApiResponse,
@@ -17,14 +17,10 @@ import type {
 
 // 获取当前用户信息
 export async function getCurrentUser(): Promise<CurrentUser> {
-  const userStore = useUserStore()
+  const { getAuthToken } = useApi()
   const { httpGet } = useHttp()
-  const token = userStore.getToken
 
-  if (!token) {
-    throw new Error('用户未登录')
-  }
-
+  const token = getAuthToken()
   const response = await httpGet<ApiResponse<CurrentUser>>('/api/user/current', token)
 
   if (response.code === 200) {
@@ -36,14 +32,10 @@ export async function getCurrentUser(): Promise<CurrentUser> {
 
 // 创建用户
 export async function createUser(userData: CreateUserRequest): Promise<CreateUserResponse> {
-  const userStore = useUserStore()
+  const { getAuthToken } = useApi()
   const { httpPost } = useHttp()
-  const token = userStore.getToken
 
-  if (!token) {
-    throw new Error('用户未登录')
-  }
-
+  const token = getAuthToken()
   const response = await httpPost<CreateUserResponse>('/api/user', userData, token)
 
   if (response.code === 200) {
@@ -55,22 +47,18 @@ export async function createUser(userData: CreateUserRequest): Promise<CreateUse
 
 // 查询用户列表
 export async function getUserList(params: PageParams): Promise<UserListResponse> {
-  const userStore = useUserStore()
+  const { getAuthToken, buildQueryParams } = useApi()
   const { httpGet } = useHttp()
-  const token = userStore.getToken
 
-  if (!token) {
-    throw new Error('用户未登录')
-  }
+  const token = getAuthToken()
+  const queryString = buildQueryParams({
+    keyword: params.keyword,
+    state: params.state,
+    pageNum: params.pageNum,
+    pageSize: params.pageSize,
+  })
 
-  // 构建查询参数
-  const queryParams = new URLSearchParams()
-  if (params.keyword) queryParams.append('keyword', params.keyword)
-  if (params.state !== undefined) queryParams.append('state', params.state.toString())
-  queryParams.append('pageNum', params.pageNum.toString())
-  queryParams.append('pageSize', params.pageSize.toString())
-
-  const url = `/api/user/list?${queryParams.toString()}`
+  const url = `/api/user/list${queryString}`
   const response = await httpGet<UserListResponse>(url, token)
 
   if (response.code === 200) {
@@ -82,14 +70,10 @@ export async function getUserList(params: PageParams): Promise<UserListResponse>
 
 // 获取用户详情
 export async function getUserDetail(userId: number): Promise<UserDetailResponse> {
-  const userStore = useUserStore()
+  const { getAuthToken } = useApi()
   const { httpGet } = useHttp()
-  const token = userStore.getToken
 
-  if (!token) {
-    throw new Error('用户未登录')
-  }
-
+  const token = getAuthToken()
   const response = await httpGet<UserDetailResponse>(`/api/user/${userId}`, token)
 
   if (response.code === 200) {
@@ -101,14 +85,10 @@ export async function getUserDetail(userId: number): Promise<UserDetailResponse>
 
 // 更新用户
 export async function updateUser(userData: UpdateUserRequest): Promise<UpdateUserResponse> {
-  const userStore = useUserStore()
+  const { getAuthToken } = useApi()
   const { httpPut } = useHttp()
-  const token = userStore.getToken
 
-  if (!token) {
-    throw new Error('用户未登录')
-  }
-
+  const token = getAuthToken()
   const response = await httpPut<UpdateUserResponse>('/api/user', userData, token)
 
   if (response.code === 200) {
@@ -122,14 +102,10 @@ export async function updateUser(userData: UpdateUserRequest): Promise<UpdateUse
 export async function resetPassword(
   passwordData: ResetPasswordRequest,
 ): Promise<ResetPasswordResponse> {
-  const userStore = useUserStore()
+  const { getAuthToken } = useApi()
   const { httpPut } = useHttp()
-  const token = userStore.getToken
 
-  if (!token) {
-    throw new Error('用户未登录')
-  }
-
+  const token = getAuthToken()
   const response = await httpPut<ResetPasswordResponse>('/api/user/password', passwordData, token)
 
   if (response.code === 200) {
@@ -141,14 +117,10 @@ export async function resetPassword(
 
 // 删除用户
 export async function deleteUser(userId: number): Promise<DeleteUserResponse> {
-  const userStore = useUserStore()
+  const { getAuthToken } = useApi()
   const { httpDelete } = useHttp()
-  const token = userStore.getToken
 
-  if (!token) {
-    throw new Error('用户未登录')
-  }
-
+  const token = getAuthToken()
   const response = await httpDelete<DeleteUserResponse>(`/api/user/${userId}`, token)
 
   if (response.code === 200) {
@@ -160,14 +132,11 @@ export async function deleteUser(userId: number): Promise<DeleteUserResponse> {
 
 // 退出登录
 export async function logout(): Promise<void> {
-  const userStore = useUserStore()
+  const { getAuthToken } = useApi()
   const { httpPost } = useHttp()
-  const token = userStore.getToken
+  const { useUserStore } = await import('@/stores/user')
 
-  if (!token) {
-    throw new Error('用户未登录')
-  }
-
+  const token = getAuthToken()
   const response = await httpPost<{ code: number; success: boolean; message: string; data: null }>(
     '/api/user/logout',
     {},
@@ -176,6 +145,7 @@ export async function logout(): Promise<void> {
 
   if (response.code === 200) {
     // 退出成功后清理前端状态
+    const userStore = useUserStore()
     userStore.logout()
   } else {
     throw new Error(response.message || '退出登录失败')
