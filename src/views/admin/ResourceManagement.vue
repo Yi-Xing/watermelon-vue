@@ -474,7 +474,6 @@ const getTreeNodeFullPath = (node: ResourceTreeNode): string => {
   // 从资源列表中查找对应的完整资源信息
   const resource = findResourceById(resourcesList.value, node.id)
   // 如果 resource 存在/为真，执行这里的代码
-  console.log(resource)
   if (resource) {
     return getResourceFullPath(resource)
   }
@@ -676,14 +675,8 @@ const getMaxLevel = (resources: Resource[], currentLevel = 0): number => {
   margin-bottom: 20px;
 }
 
-.action-buttons {
-  display: flex;
-  gap: 8px;
-  flex-wrap: nowrap;
-}
-
-.action-buttons .el-button {
-  flex-shrink: 0;
+.el-button {
+  margin-right: 8px;
 }
 
 .parent-selector {
@@ -711,11 +704,6 @@ const getMaxLevel = (resources: Resource[], currentLevel = 0): number => {
 
   .search-card .el-form-item {
     margin-bottom: 15px;
-  }
-
-  .action-buttons {
-    flex-direction: column;
-    gap: 4px;
   }
 }
 </style>

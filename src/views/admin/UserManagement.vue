@@ -57,13 +57,11 @@
         <el-table-column prop="updatedTime" label="更新时间" width="180" />
         <el-table-column label="操作" width="280">
           <template #default="{ row }">
-            <div class="action-buttons">
-              <el-button type="primary" size="small" @click="handleEdit(row)"> 编辑 </el-button>
-              <el-button type="warning" size="small" @click="handleResetPassword(row)">
-                重置密码
-              </el-button>
-              <el-button type="danger" size="small" @click="handleDelete(row)"> 删除 </el-button>
-            </div>
+            <el-button type="primary" size="small" @click="handleEdit(row)"> 编辑 </el-button>
+            <el-button type="warning" size="small" @click="handleResetPassword(row)">
+              重置密码
+            </el-button>
+            <el-button type="danger" size="small" @click="handleDelete(row)"> 删除 </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -550,14 +548,8 @@ const handleCurrentChange = (page: number) => {
   margin-top: 20px;
 }
 
-.action-buttons {
-  display: flex;
-  gap: 8px;
-  flex-wrap: nowrap;
-}
-
-.action-buttons .el-button {
-  flex-shrink: 0;
+.el-button {
+  margin-right: 8px;
 }
 
 /* 响应式设计 */
@@ -579,11 +571,6 @@ const handleCurrentChange = (page: number) => {
 
   .search-card .el-form-item {
     margin-bottom: 15px;
-  }
-
-  .action-buttons {
-    flex-direction: column;
-    gap: 4px;
   }
 }
 </style>

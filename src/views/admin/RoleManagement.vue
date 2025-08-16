@@ -12,17 +12,17 @@
     <!-- 搜索区域 -->
     <el-card class="search-card">
       <el-form :model="searchForm" inline>
-        <el-form-item label="名称搜索">
+        <el-form-item label="角色名称">
           <el-input
             v-model="searchForm.name"
             placeholder="请输入角色名称"
             clearable
-            style="width: 250px"
+            @keyup.enter="handleSearch"
           />
         </el-form-item>
         <el-form-item label="状态">
           <el-select
-            v-model="searchForm.status"
+            v-model="searchForm.state"
             placeholder="请选择状态"
             clearable
             style="width: 90px"
@@ -41,28 +41,37 @@
 
     <!-- 角色列表 -->
     <el-card class="roles-table-card">
-      <el-table :data="filteredRolesList" v-loading="loading" stripe>
+      <el-table :data="rolesList" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="name" label="名称" width="150" />
-        <el-table-column prop="sortOrder" label="显示顺序" width="100" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="orderNum" label="显示顺序" width="100" />
+        <el-table-column prop="state" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="row.status === 1 ? 'success' : 'danger'">
-              {{ row.status === 1 ? '启用' : '禁用' }}
+            <el-tag :type="row.state === 1 ? 'success' : 'danger'">
+              {{ row.state === 1 ? '启用' : '禁用' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" label="创建时间" width="180" />
-        <el-table-column prop="updatedAt" label="更新时间" width="180" />
-        <el-table-column label="操作" width="300">
+        <el-table-column prop="remark" label="备注" min-width="130" show-overflow-tooltip>
           <template #default="{ row }">
-            <div class="action-buttons">
-              <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
-              <el-button type="warning" size="small" @click="handleUpdateResources(row)"
-                >更新资源</el-button
-              >
-              <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
-            </div>
+            <span
+              class="remark-text"
+              :class="{ 'remark-long': row.remark && row.remark.length > 20 }"
+              :title="row.remark"
+            >
+              {{ row.remark || '无' }}
+            </span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdTime" label="创建时间" width="180" />
+        <el-table-column prop="updatedTime" label="更新时间" width="180" />
+        <el-table-column label="操作" width="200">
+          <template #default="{ row }">
+            <el-button type="primary" size="small" @click="handleEdit(row)"> 编辑 </el-button>
+            <el-button type="success" size="small" @click="handleUpdateResources(row)">
+              资源
+            </el-button>
+            <el-button type="danger" size="small" @click="handleDelete(row)"> 删除 </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -86,38 +95,32 @@
     <el-dialog
       v-model="roleDialogVisible"
       :title="dialogType === 'add' ? '新增角色' : '编辑角色'"
-      width="500px"
-      :z-index="3000"
+      width="600px"
+      :close-on-click-modal="false"
     >
       <el-form ref="roleFormRef" :model="roleForm" :rules="roleRules" label-width="100px">
-        <el-form-item label="名称" prop="name">
+        <el-form-item label="角色名称" prop="name">
           <el-input v-model="roleForm.name" placeholder="请输入角色名称" />
         </el-form-item>
-        <el-form-item label="显示顺序" prop="sortOrder">
-          <el-input-number v-model="roleForm.sortOrder" :min="1" :max="999" style="width: 100%" />
+        <el-form-item label="显示顺序" prop="orderNum">
+          <el-input-number v-model="roleForm.orderNum" :min="1" :max="999" style="width: 100%" />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
-          <el-radio-group v-model="roleForm.status">
+        <el-form-item label="状态" prop="state">
+          <el-radio-group v-model="roleForm.state">
             <el-radio :label="1">启用</el-radio>
             <el-radio :label="2">禁用</el-radio>
           </el-radio-group>
         </el-form-item>
+
         <el-form-item label="备注" prop="remark">
-          <el-input
-            v-model="roleForm.remark"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入备注信息"
-            maxlength="500"
-            show-word-limit
-          />
+          <el-input v-model="roleForm.remark" type="textarea" :rows="3" placeholder="请输入备注" />
         </el-form-item>
       </el-form>
       <template #footer>
-        <span class="dialog-footer">
-          <el-button @click="roleDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">确定</el-button>
-        </span>
+        <el-button @click="roleDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="loading">
+          {{ dialogType === 'add' ? '新增' : '更新' }}
+        </el-button>
       </template>
     </el-dialog>
 
@@ -145,32 +148,30 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
-
-// 角色类型定义
-interface Role {
-  id: number
-  name: string
-  sortOrder: number
-  status: number
-  createdAt: string
-  updatedAt: string
-  remark: string
-}
-
-// 资源类型定义
-interface Resource {
-  id: number
-  name: string
-  children?: Resource[]
-}
+import {
+  getRoleList,
+  createRole,
+  updateRole,
+  deleteRole,
+  getRoleDetail,
+  getRoleResources,
+  updateRoleResources,
+} from '@/api/admin/role'
+import type {
+  Role,
+  CreateRoleRequest,
+  UpdateRoleRequest,
+  Resource,
+  RolePageParams,
+} from '@/types/role'
 
 // 搜索表单
 const searchForm = reactive({
   name: '',
-  status: 0, // 默认选择"全部"
+  state: 0, // 默认选择"全部"
 })
 
 // 分页信息
@@ -182,7 +183,6 @@ const pagination = reactive({
 
 // 角色列表
 const rolesList = ref<Role[]>([])
-const filteredRolesList = ref<Role[]>([])
 const loading = ref(false)
 
 // 对话框相关
@@ -194,9 +194,10 @@ const currentRoleId = ref<number | null>(null)
 // 角色表单
 const roleFormRef = ref()
 const roleForm = reactive({
+  id: 0,
   name: '',
-  sortOrder: 1,
-  status: 1,
+  orderNum: 1,
+  state: 1,
   remark: '',
 })
 
@@ -206,8 +207,8 @@ const roleRules = {
     { required: true, message: '请输入角色名称', trigger: 'blur' },
     { min: 3, max: 10, message: '角色名称长度在 3 到 10 个字符', trigger: 'blur' },
   ],
-  sortOrder: [{ required: true, message: '请输入显示顺序', trigger: 'blur' }],
-  status: [{ required: true, message: '请选择状态', trigger: 'change' }],
+  orderNum: [{ required: true, message: '请输入显示顺序', trigger: 'blur' }],
+  state: [{ required: true, message: '请选择状态', trigger: 'change' }],
   remark: [{ max: 500, message: '备注长度不能超过 500 个字符', trigger: 'blur' }],
 }
 
@@ -223,65 +224,15 @@ const treeProps = {
   label: 'name',
 }
 
-// 模拟角色数据
-const mockRoles: Role[] = [
-  {
-    id: 1,
-    name: '超级管理员',
-    sortOrder: 1,
-    status: 1,
-    createdAt: '2024-01-15 10:30:00',
-    updatedAt: '2024-01-15 10:30:00',
-    remark: '系统超级管理员，拥有所有权限',
+// 监听状态变化，自动触发搜索
+watch(
+  () => searchForm.state,
+  () => {
+    // 当选择具体状态时，自动触发搜索
+    pagination.currentPage = 1
+    loadRoles()
   },
-  {
-    id: 2,
-    name: '普通用户',
-    sortOrder: 2,
-    status: 1,
-    createdAt: '2024-01-15 09:15:00',
-    updatedAt: '2024-01-15 09:15:00',
-    remark: '普通用户角色',
-  },
-  {
-    id: 3,
-    name: '访客',
-    sortOrder: 3,
-    status: 2,
-    createdAt: '2024-01-15 08:00:00',
-    updatedAt: '2024-01-15 08:00:00',
-    remark: '访客角色，已禁用',
-  },
-]
-
-// 模拟资源树数据
-const mockResources: Resource[] = [
-  {
-    id: 1,
-    name: '系统管理',
-    children: [
-      { id: 11, name: '用户管理' },
-      { id: 12, name: '角色管理' },
-      { id: 13, name: '资源管理' },
-    ],
-  },
-  {
-    id: 2,
-    name: '内容管理',
-    children: [
-      { id: 21, name: '文章管理' },
-      { id: 22, name: '分类管理' },
-    ],
-  },
-  {
-    id: 3,
-    name: '数据统计',
-    children: [
-      { id: 31, name: '访问统计' },
-      { id: 32, name: '用户统计' },
-    ],
-  },
-]
+)
 
 // 初始化数据
 onMounted(() => {
@@ -290,95 +241,169 @@ onMounted(() => {
 })
 
 // 加载角色列表
-const loadRoles = () => {
+const loadRoles = async () => {
   loading.value = true
-  setTimeout(() => {
-    rolesList.value = mockRoles
-    applyFilters()
+  try {
+    const params: RolePageParams = {
+      name: searchForm.name || undefined,
+      state: searchForm.state === 0 ? undefined : searchForm.state,
+      pageNum: pagination.currentPage,
+      pageSize: pagination.pageSize,
+    }
+
+    const response = await getRoleList(params)
+    rolesList.value = response.data.dataList
+    pagination.total = response.data.total
+    pagination.currentPage = response.data.current
+    pagination.pageSize = response.data.size
+  } catch (error) {
+    console.error('获取角色列表失败:', error)
+    ElMessage.error('获取角色列表失败')
+  } finally {
     loading.value = false
-  }, 500)
+  }
 }
 
 // 加载资源树
-const loadResources = () => {
-  resourcesTree.value = mockResources
-}
-
-// 应用筛选
-const applyFilters = () => {
-  let filtered = [...rolesList.value]
-
-  // 状态筛选
-  if (searchForm.status !== 0) {
-    filtered = filtered.filter((role) => role.status === searchForm.status)
+const loadResources = async () => {
+  try {
+    // 这里需要调用获取资源树的API
+    // 暂时使用模拟数据
+    resourcesTree.value = [
+      {
+        id: 1,
+        name: '系统管理',
+        children: [
+          { id: 11, name: '用户管理' },
+          { id: 12, name: '角色管理' },
+          { id: 13, name: '资源管理' },
+        ],
+      },
+      {
+        id: 2,
+        name: '内容管理',
+        children: [
+          { id: 21, name: '文章管理' },
+          { id: 22, name: '分类管理' },
+        ],
+      },
+      {
+        id: 3,
+        name: '数据统计',
+        children: [
+          { id: 31, name: '访问统计' },
+          { id: 32, name: '用户统计' },
+        ],
+      },
+    ]
+  } catch (error) {
+    console.error('获取资源树失败:', error)
+    ElMessage.error('获取资源树失败')
   }
-
-  // 名称筛选
-  if (searchForm.name.trim()) {
-    const keyword = searchForm.name.toLowerCase()
-    filtered = filtered.filter((role) => role.name.toLowerCase().includes(keyword))
-  }
-
-  filteredRolesList.value = filtered
-  pagination.total = filtered.length
-  pagination.currentPage = 1
 }
 
 // 搜索
 const handleSearch = () => {
-  applyFilters()
+  pagination.currentPage = 1
+  loadRoles()
 }
 
 // 重置搜索
 const handleReset = () => {
   searchForm.name = ''
-  searchForm.status = 0
-  applyFilters()
+  searchForm.state = 0
+  pagination.currentPage = 1
+  loadRoles()
 }
 
 // 新增角色
 const handleAdd = () => {
   dialogType.value = 'add'
   resetRoleForm()
+  console.log('新增角色 - 表单重置后:', roleForm)
   roleDialogVisible.value = true
 }
 
 // 编辑角色
-const handleEdit = (row: Role) => {
-  dialogType.value = 'edit'
-  currentRoleId.value = row.id
-  Object.assign(roleForm, row)
-  roleDialogVisible.value = true
+const handleEdit = async (row: Role) => {
+  try {
+    dialogType.value = 'edit'
+    currentRoleId.value = row.id
+    loading.value = true
+
+    // 调用API获取角色详情
+    const response = await getRoleDetail(row.id)
+    const roleDetail = response.data
+
+    // 填充表单数据
+    Object.assign(roleForm, {
+      id: roleDetail.id,
+      name: roleDetail.name,
+      orderNum: roleDetail.orderNum,
+      state: roleDetail.state,
+      remark: roleDetail.remark,
+    })
+
+    roleDialogVisible.value = true
+  } catch (error) {
+    console.error('获取角色详情失败:', error)
+    ElMessage.error('获取角色详情失败')
+  } finally {
+    loading.value = false
+  }
 }
 
 // 删除角色
-const handleDelete = (row: Role) => {
-  ElMessageBox.confirm(`是否确认删除角色"${row.name}"？`, '确认删除', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning',
-  })
-    .then(() => {
-      // 模拟删除
-      const index = rolesList.value.findIndex((item) => item.id === row.id)
-      if (index > -1) {
-        rolesList.value.splice(index, 1)
-        applyFilters()
-        ElMessage.success('删除成功')
-      }
+const handleDelete = async (row: Role) => {
+  try {
+    await ElMessageBox.confirm(`是否确认删除角色"${row.name}"？`, '确认删除', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning',
     })
-    .catch(() => {
-      // 取消删除
-    })
+
+    await deleteRole(row.id)
+    ElMessage.success('删除成功')
+    loadRoles()
+  } catch (error) {
+    if (error !== 'cancel') {
+      console.error('删除角色失败:', error)
+      ElMessage.error('删除角色失败')
+    }
+  }
 }
 
 // 更新资源
-const handleUpdateResources = (row: Role) => {
-  currentRoleId.value = row.id
-  // 模拟获取角色已有资源
-  selectedResourceIds.value = [11, 21, 31] // 示例：选中部分资源
-  expandedKeys.value = [1, 2, 3] // 默认展开所有父节点
-  resourcesDialogVisible.value = true
+const handleUpdateResources = async (row: Role) => {
+  try {
+    currentRoleId.value = row.id
+    loading.value = true
+
+    // 调用API获取角色已有资源
+    const response = await getRoleResources(row.id)
+    const roleResources = response.data
+
+    // 提取资源ID列表
+    const extractResourceIds = (resources: Resource[]): number[] => {
+      const ids: number[] = []
+      resources.forEach((resource) => {
+        ids.push(resource.id)
+        if (resource.children) {
+          ids.push(...extractResourceIds(resource.children))
+        }
+      })
+      return ids
+    }
+
+    selectedResourceIds.value = extractResourceIds(roleResources)
+    expandedKeys.value = [1, 2, 3] // 默认展开所有父节点
+    resourcesDialogVisible.value = true
+  } catch (error) {
+    console.error('获取角色资源失败:', error)
+    ElMessage.error('获取角色资源失败')
+  } finally {
+    loading.value = false
+  }
 }
 
 // 提交角色表单
@@ -387,55 +412,72 @@ const handleSubmit = async () => {
 
   try {
     await roleFormRef.value.validate()
+    loading.value = true
 
     if (dialogType.value === 'add') {
       // 新增角色
-      const newRole: Role = {
-        id: Date.now(),
-        ...roleForm,
-        createdAt: new Date().toLocaleString(),
-        updatedAt: new Date().toLocaleString(),
+      const createData: CreateRoleRequest = {
+        name: roleForm.name,
+        orderNum: roleForm.orderNum,
+        state: roleForm.state,
+        remark: roleForm.remark,
       }
-      rolesList.value.push(newRole)
+      await createRole(createData)
       ElMessage.success('新增成功')
     } else {
       // 编辑角色
-      const index = rolesList.value.findIndex((item) => item.id === currentRoleId.value)
-      if (index > -1) {
-        Object.assign(rolesList.value[index], {
-          ...roleForm,
-          updatedAt: new Date().toLocaleString(),
-        })
-        ElMessage.success('更新成功')
+      const updateData: UpdateRoleRequest = {
+        id: roleForm.id,
+        name: roleForm.name,
+        orderNum: roleForm.orderNum,
+        state: roleForm.state,
+        remark: roleForm.remark,
       }
+      await updateRole(updateData)
+      ElMessage.success('更新成功')
     }
 
-    applyFilters()
     roleDialogVisible.value = false
+    loadRoles()
   } catch (error) {
-    console.error('角色表单验证失败:', error)
-    // 验证失败
+    console.error('操作失败:', error)
+    ElMessage.error(error instanceof Error ? error.message : '操作失败')
+  } finally {
+    loading.value = false
   }
 }
 
 // 提交资源更新
-const handleUpdateResourcesSubmit = () => {
-  const checkedKeys = resourcesTreeRef.value.getCheckedKeys()
-  const halfCheckedKeys = resourcesTreeRef.value.getHalfCheckedKeys()
+const handleUpdateResourcesSubmit = async () => {
+  if (!currentRoleId.value) return
 
-  console.log('选中的资源:', checkedKeys)
-  console.log('半选中的资源:', halfCheckedKeys)
+  try {
+    const checkedKeys = resourcesTreeRef.value.getCheckedKeys()
+    const halfCheckedKeys = resourcesTreeRef.value.getHalfCheckedKeys()
 
-  ElMessage.success('资源更新成功')
-  resourcesDialogVisible.value = false
+    // 合并选中的和半选中的资源ID
+    const allResourceIds = [...checkedKeys, ...halfCheckedKeys]
+
+    await updateRoleResources(currentRoleId.value, allResourceIds)
+    ElMessage.success('资源更新成功')
+    resourcesDialogVisible.value = false
+  } catch (error) {
+    console.error('更新角色资源失败:', error)
+    ElMessage.error(error instanceof Error ? error.message : '更新角色资源失败')
+  }
 }
 
 // 重置角色表单
 const resetRoleForm = () => {
-  roleForm.name = ''
-  roleForm.sortOrder = 1
-  roleForm.status = 1
-  roleForm.remark = ''
+  console.log('重置表单前:', roleForm)
+  Object.assign(roleForm, {
+    id: 0,
+    name: '',
+    orderNum: 1,
+    state: 1,
+    remark: '',
+  })
+  console.log('重置表单后:', roleForm)
   currentRoleId.value = null
 }
 
@@ -443,10 +485,12 @@ const resetRoleForm = () => {
 const handleSizeChange = (size: number) => {
   pagination.pageSize = size
   pagination.currentPage = 1
+  loadRoles()
 }
 
 const handleCurrentChange = (page: number) => {
   pagination.currentPage = page
+  loadRoles()
 }
 </script>
 
@@ -495,11 +539,22 @@ const handleCurrentChange = (page: number) => {
 .action-buttons {
   display: flex;
   gap: 8px;
-  flex-wrap: nowrap;
 }
 
-.action-buttons .el-button {
-  flex-shrink: 0;
+/* 备注字段样式 */
+.remark-text {
+  display: inline-block;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.remark-long {
+  max-width: 120px; /* 当备注较长时，缩短显示宽度 */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pagination-wrapper {
@@ -564,6 +619,16 @@ const handleCurrentChange = (page: number) => {
   .action-buttons {
     flex-direction: column;
     gap: 4px;
+  }
+
+  .search-form {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 5px;
   }
 }
 </style>
