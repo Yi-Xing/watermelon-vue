@@ -13,17 +13,15 @@ const router = useRouter()
 
 const loginForm = reactive({
   username: '',
-  password: ''
+  password: '',
 })
 
 const rules = {
-  username: [
-    { required: true, message: '请输入用户名', trigger: 'blur' }
-  ],
+  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
   password: [
     { required: true, message: '请输入密码', trigger: 'blur' },
-    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' }
-  ]
+    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' },
+  ],
 }
 
 const handleLogin = async () => {
@@ -72,13 +70,15 @@ const handleLogin = async () => {
               登录
             </h2>
 
-            <el-form :model="loginForm" :rules="rules" ref="loginFormRef" class="login-form">
+            <el-form
+              :model="loginForm"
+              :rules="rules"
+              ref="loginFormRef"
+              class="login-form"
+              @submit.prevent="handleLogin"
+            >
               <el-form-item prop="username">
-                <el-input
-                  v-model="loginForm.username"
-                  placeholder="请输入用户名"
-                  size="large"
-                >
+                <el-input v-model="loginForm.username" placeholder="请输入用户名" size="large">
                   <template #prefix>
                     <el-icon><User /></el-icon>
                   </template>
@@ -92,6 +92,7 @@ const handleLogin = async () => {
                   placeholder="请输入密码"
                   size="large"
                   show-password
+                  @keyup.enter="handleLogin"
                 >
                   <template #prefix>
                     <el-icon><Lock /></el-icon>
@@ -290,7 +291,7 @@ const handleLogin = async () => {
 }
 
 .welcome-box {
-  background-color: rgba(98, 162, 240, .1);
+  background-color: rgba(98, 162, 240, 0.1);
   padding: 30px;
   border-radius: 12px;
   box-shadow: 0 8px 25px rgba(98, 162, 240, 0.15);

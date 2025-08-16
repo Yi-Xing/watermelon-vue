@@ -4,18 +4,19 @@ import AdminLayout from '../views/admin/AdminLayout.vue'
 import Dashboard from '../views/admin/Dashboard.vue'
 import Users from '../views/admin/Users.vue'
 import Roles from '../views/admin/Roles.vue'
+import Resources from '../views/admin/Resources.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
-      redirect: '/login'
+      redirect: '/login',
     },
     {
       path: '/login',
       name: 'login',
-      component: LoginView
+      component: LoginView,
     },
     {
       path: '/admin',
@@ -23,26 +24,31 @@ const router = createRouter({
       children: [
         {
           path: '',
-          redirect: '/admin/dashboard'
+          redirect: '/admin/dashboard',
         },
         {
           path: 'dashboard',
           name: 'admin-dashboard',
-          component: Dashboard
+          component: Dashboard,
         },
         {
           path: 'users',
           name: 'admin-users',
-          component: Users
+          component: Users,
         },
         {
           path: 'roles',
           name: 'admin-roles',
-          component: Roles
-        }
-      ]
-    }
-  ]
+          component: Roles,
+        },
+        {
+          path: 'resources',
+          name: 'admin-resources',
+          component: Resources,
+        },
+      ],
+    },
+  ],
 })
 
 export default router
