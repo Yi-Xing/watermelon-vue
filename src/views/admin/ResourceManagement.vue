@@ -179,7 +179,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Upload, Download, Files } from '@element-plus/icons-vue'
+import { Plus, Upload, Download } from '@element-plus/icons-vue'
 import type { Resource, ResourceForm, ResourceSearchForm, ResourceTreeNode } from '@/types/resource'
 import { ResourceType, ResourceStatus } from '@/types/resource'
 import * as resourceApi from '@/api/resource'
@@ -312,6 +312,8 @@ const loadResources = async () => {
     resourcesTree.value = [{ id: 0, name: '顶级资源', children: resources }]
     applyFilters()
   } catch (error) {
+    // 记录错误信息
+    console.error('加载资源失败:', error)
     // 如果API调用失败，使用模拟数据
     resourcesList.value = mockResources
     resourcesTree.value = [{ id: 0, name: '顶级资源', children: mockResources }]
@@ -439,6 +441,7 @@ const handleDelete = (row: Resource) => {
       ElMessage.success('删除成功')
       loadResources()
     } catch (error) {
+      console.error('删除资源失败:', error)
       ElMessage.error('删除失败')
     }
   })
@@ -507,6 +510,7 @@ const handleImport = () => {
         ElMessage.success('导入成功')
         loadResources()
       } catch (error) {
+        console.error('导入资源失败:', error)
         ElMessage.error('导入失败')
       }
     }
@@ -528,6 +532,7 @@ const handleExport = async () => {
     window.URL.revokeObjectURL(url)
     ElMessage.success('导出成功')
   } catch (error) {
+    console.error('导出资源失败:', error)
     ElMessage.error('导出失败')
   }
 }
@@ -568,6 +573,7 @@ const handleSubmit = async () => {
     submitting.value = false
     loadResources()
   } catch (error) {
+    console.error(dialogType.value === 'add' ? '新增资源失败:' : '编辑资源失败:', error)
     ElMessage.error(dialogType.value === 'add' ? '新增失败' : '编辑失败')
     submitting.value = false
   }

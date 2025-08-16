@@ -58,7 +58,9 @@
           <template #default="{ row }">
             <div class="action-buttons">
               <el-button type="primary" size="small" @click="handleEdit(row)">编辑</el-button>
-              <el-button type="warning" size="small" @click="handleUpdateResources(row)">更新资源</el-button>
+              <el-button type="warning" size="small" @click="handleUpdateResources(row)"
+                >更新资源</el-button
+              >
               <el-button type="danger" size="small" @click="handleDelete(row)">删除</el-button>
             </div>
           </template>
@@ -89,12 +91,7 @@
       width="500px"
       :z-index="3000"
     >
-      <el-form
-        ref="roleFormRef"
-        :model="roleForm"
-        :rules="roleRules"
-        label-width="100px"
-      >
+      <el-form ref="roleFormRef" :model="roleForm" :rules="roleRules" label-width="100px">
         <el-form-item label="名称" prop="name">
           <el-input v-model="roleForm.name" placeholder="请输入角色名称" />
         </el-form-item>
@@ -127,12 +124,7 @@
     </el-dialog>
 
     <!-- 更新资源对话框 -->
-    <el-dialog
-      v-model="resourcesDialogVisible"
-      title="更新角色资源"
-      width="600px"
-      :z-index="3000"
-    >
+    <el-dialog v-model="resourcesDialogVisible" title="更新角色资源" width="600px" :z-index="3000">
       <div class="resources-tree-container">
         <el-tree
           ref="resourcesTreeRef"
@@ -180,14 +172,14 @@ interface Resource {
 // 搜索表单
 const searchForm = reactive({
   name: '',
-  status: 0 // 默认选择"全部"
+  status: 0, // 默认选择"全部"
 })
 
 // 分页信息
 const pagination = reactive({
   currentPage: 1,
   pageSize: 20,
-  total: 0
+  total: 0,
 })
 
 // 角色列表
@@ -207,24 +199,18 @@ const roleForm = reactive({
   name: '',
   sortOrder: 1,
   status: 1,
-  remark: ''
+  remark: '',
 })
 
 // 角色表单验证规则
 const roleRules = {
   name: [
     { required: true, message: '请输入角色名称', trigger: 'blur' },
-    { min: 3, max: 10, message: '角色名称长度在 3 到 10 个字符', trigger: 'blur' }
+    { min: 3, max: 10, message: '角色名称长度在 3 到 10 个字符', trigger: 'blur' },
   ],
-  sortOrder: [
-    { required: true, message: '请输入显示顺序', trigger: 'blur' }
-  ],
-  status: [
-    { required: true, message: '请选择状态', trigger: 'change' }
-  ],
-  remark: [
-    { max: 500, message: '备注长度不能超过 500 个字符', trigger: 'blur' }
-  ]
+  sortOrder: [{ required: true, message: '请输入显示顺序', trigger: 'blur' }],
+  status: [{ required: true, message: '请选择状态', trigger: 'change' }],
+  remark: [{ max: 500, message: '备注长度不能超过 500 个字符', trigger: 'blur' }],
 }
 
 // 资源树相关
@@ -236,7 +222,7 @@ const expandedKeys = ref<number[]>([])
 // 树形配置
 const treeProps = {
   children: 'children',
-  label: 'name'
+  label: 'name',
 }
 
 // 模拟角色数据
@@ -248,7 +234,7 @@ const mockRoles: Role[] = [
     status: 1,
     createdAt: '2024-01-15 10:30:00',
     updatedAt: '2024-01-15 10:30:00',
-    remark: '系统超级管理员，拥有所有权限'
+    remark: '系统超级管理员，拥有所有权限',
   },
   {
     id: 2,
@@ -257,7 +243,7 @@ const mockRoles: Role[] = [
     status: 1,
     createdAt: '2024-01-15 09:15:00',
     updatedAt: '2024-01-15 09:15:00',
-    remark: '普通用户角色'
+    remark: '普通用户角色',
   },
   {
     id: 3,
@@ -266,8 +252,8 @@ const mockRoles: Role[] = [
     status: 2,
     createdAt: '2024-01-15 08:00:00',
     updatedAt: '2024-01-15 08:00:00',
-    remark: '访客角色，已禁用'
-  }
+    remark: '访客角色，已禁用',
+  },
 ]
 
 // 模拟资源树数据
@@ -278,25 +264,25 @@ const mockResources: Resource[] = [
     children: [
       { id: 11, name: '用户管理' },
       { id: 12, name: '角色管理' },
-      { id: 13, name: '资源管理' }
-    ]
+      { id: 13, name: '资源管理' },
+    ],
   },
   {
     id: 2,
     name: '内容管理',
     children: [
       { id: 21, name: '文章管理' },
-      { id: 22, name: '分类管理' }
-    ]
+      { id: 22, name: '分类管理' },
+    ],
   },
   {
     id: 3,
     name: '数据统计',
     children: [
       { id: 31, name: '访问统计' },
-      { id: 32, name: '用户统计' }
-    ]
-  }
+      { id: 32, name: '用户统计' },
+    ],
+  },
 ]
 
 // 初始化数据
@@ -326,15 +312,13 @@ const applyFilters = () => {
 
   // 状态筛选
   if (searchForm.status !== 0) {
-    filtered = filtered.filter(role => role.status === searchForm.status)
+    filtered = filtered.filter((role) => role.status === searchForm.status)
   }
 
   // 名称筛选
   if (searchForm.name.trim()) {
     const keyword = searchForm.name.toLowerCase()
-    filtered = filtered.filter(role =>
-      role.name.toLowerCase().includes(keyword)
-    )
+    filtered = filtered.filter((role) => role.name.toLowerCase().includes(keyword))
   }
 
   filteredRolesList.value = filtered
@@ -371,25 +355,23 @@ const handleEdit = (row: Role) => {
 
 // 删除角色
 const handleDelete = (row: Role) => {
-  ElMessageBox.confirm(
-    `是否确认删除角色"${row.name}"？`,
-    '确认删除',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-  ).then(() => {
-    // 模拟删除
-    const index = rolesList.value.findIndex(item => item.id === row.id)
-    if (index > -1) {
-      rolesList.value.splice(index, 1)
-      applyFilters()
-      ElMessage.success('删除成功')
-    }
-  }).catch(() => {
-    // 取消删除
+  ElMessageBox.confirm(`是否确认删除角色"${row.name}"？`, '确认删除', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
   })
+    .then(() => {
+      // 模拟删除
+      const index = rolesList.value.findIndex((item) => item.id === row.id)
+      if (index > -1) {
+        rolesList.value.splice(index, 1)
+        applyFilters()
+        ElMessage.success('删除成功')
+      }
+    })
+    .catch(() => {
+      // 取消删除
+    })
 }
 
 // 更新资源
@@ -414,17 +396,17 @@ const handleSubmit = async () => {
         id: Date.now(),
         ...roleForm,
         createdAt: new Date().toLocaleString(),
-        updatedAt: new Date().toLocaleString()
+        updatedAt: new Date().toLocaleString(),
       }
       rolesList.value.push(newRole)
       ElMessage.success('新增成功')
     } else {
       // 编辑角色
-      const index = rolesList.value.findIndex(item => item.id === currentRoleId.value)
+      const index = rolesList.value.findIndex((item) => item.id === currentRoleId.value)
       if (index > -1) {
         Object.assign(rolesList.value[index], {
           ...roleForm,
-          updatedAt: new Date().toLocaleString()
+          updatedAt: new Date().toLocaleString(),
         })
         ElMessage.success('更新成功')
       }
@@ -433,6 +415,7 @@ const handleSubmit = async () => {
     applyFilters()
     roleDialogVisible.value = false
   } catch (error) {
+    console.error('角色表单验证失败:', error)
     // 验证失败
   }
 }

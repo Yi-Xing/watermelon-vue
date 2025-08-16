@@ -1,10 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '../views/LoginView.vue'
 import AdminLayout from '../views/admin/AdminLayout.vue'
-import Dashboard from '../views/admin/Dashboard.vue'
-import Users from '../views/admin/Users.vue'
+import AdminDashboard from '../views/admin/AdminDashboard.vue'
+import UserManagement from '../views/admin/UserManagement.vue'
 import Roles from '../views/admin/Roles.vue'
-import Resources from '../views/admin/Resources.vue'
+import ResourceManagement from '../views/admin/ResourceManagement.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -29,12 +29,12 @@ const router = createRouter({
         {
           path: 'dashboard',
           name: 'admin-dashboard',
-          component: Dashboard,
+          component: AdminDashboard,
         },
         {
           path: 'users',
           name: 'admin-users',
-          component: Users,
+          component: UserManagement,
         },
         {
           path: 'roles',
@@ -44,7 +44,7 @@ const router = createRouter({
         {
           path: 'resources',
           name: 'admin-resources',
-          component: Resources,
+          component: ResourceManagement,
         },
       ],
     },

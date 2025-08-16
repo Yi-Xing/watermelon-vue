@@ -57,15 +57,11 @@
         <el-table-column label="操作" width="280">
           <template #default="{ row }">
             <div class="action-buttons">
-              <el-button type="primary" size="small" @click="handleEdit(row)">
-                编辑
-              </el-button>
+              <el-button type="primary" size="small" @click="handleEdit(row)"> 编辑 </el-button>
               <el-button type="warning" size="small" @click="handleResetPassword(row)">
                 重置密码
               </el-button>
-              <el-button type="danger" size="small" @click="handleDelete(row)">
-                删除
-              </el-button>
+              <el-button type="danger" size="small" @click="handleDelete(row)"> 删除 </el-button>
             </div>
           </template>
         </el-table-column>
@@ -94,12 +90,7 @@
       :title="dialogType === 'add' ? '新增用户' : '编辑用户'"
       width="600px"
     >
-      <el-form
-        ref="userFormRef"
-        :model="userForm"
-        :rules="userFormRules"
-        label-width="100px"
-      >
+      <el-form ref="userFormRef" :model="userForm" :rules="userFormRules" label-width="100px">
         <el-form-item label="名称" prop="name">
           <el-input v-model="userForm.name" placeholder="请输入名称" />
         </el-form-item>
@@ -119,15 +110,15 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="备注" prop="remark">
-          <el-input
-            v-model="userForm.remark"
-            type="textarea"
-            :rows="3"
-            placeholder="请输入备注"
-          />
+          <el-input v-model="userForm.remark" type="textarea" :rows="3" placeholder="请输入备注" />
         </el-form-item>
         <el-form-item label="角色" prop="roleIds">
-          <el-select v-model="userForm.roleIds" multiple placeholder="请选择角色" style="width: 100%">
+          <el-select
+            v-model="userForm.roleIds"
+            multiple
+            placeholder="请选择角色"
+            style="width: 100%"
+          >
             <el-option
               v-for="role in roleOptions"
               :key="role.id"
@@ -139,9 +130,7 @@
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit" :loading="submitting">
-          确定
-        </el-button>
+        <el-button type="primary" @click="handleSubmit" :loading="submitting"> 确定 </el-button>
       </template>
     </el-dialog>
 
@@ -183,19 +172,31 @@ import { Plus } from '@element-plus/icons-vue'
 // 搜索表单
 const searchForm = reactive({
   keyword: '',
-  status: 0  // 默认选择"全部"
+  status: 0, // 默认选择"全部"
 })
 
 // 分页信息
 const pagination = reactive({
   currentPage: 1,
   pageSize: 20,
-  total: 0
+  total: 0,
 })
 
+// 用户类型定义
+interface User {
+  id: number
+  name: string
+  email: string
+  phone: string
+  status: number
+  updatedAt: string
+  remark: string
+  roleIds: number[]
+}
+
 // 用户列表
-const usersList = ref([])
-const filteredUsersList = ref([])  // 添加筛选后的用户列表
+const usersList = ref<User[]>([])
+const filteredUsersList = ref<User[]>([]) // 添加筛选后的用户列表
 const loading = ref(false)
 
 // 对话框相关
@@ -213,67 +214,59 @@ const userForm = reactive({
   password: '',
   status: 1,
   remark: '',
-  roleIds: []
+  roleIds: [],
 })
 
 // 角色选项
 const roleOptions = ref([
   { id: 1, name: '超级管理员' },
   { id: 2, name: '普通管理员' },
-  { id: 3, name: '普通用户' }
+  { id: 3, name: '普通用户' },
 ])
 
 // 重置密码相关
 const resetPasswordVisible = ref(false)
 const resetPasswordFormRef = ref()
-const currentUserId = ref('')
+const currentUserId = ref<number | null>(null)
 const resetPasswordForm = reactive({
   newPassword: '',
-  confirmPassword: ''
+  confirmPassword: '',
 })
 
 // 表单验证规则
 const userFormRules = {
   name: [
     { required: true, message: '请输入名称', trigger: 'blur' },
-    { min: 3, max: 10, message: '名称长度在 3 到 10 个字符', trigger: 'blur' }
+    { min: 3, max: 10, message: '名称长度在 3 到 10 个字符', trigger: 'blur' },
   ],
   email: [
-    { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: '请输入正确的邮箱格式', trigger: 'blur' }
+    { pattern: /^[^\s@]+@[^\s@]+\.[^\s@]+$/, message: '请输入正确的邮箱格式', trigger: 'blur' },
   ],
-  phone: [
-    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号格式', trigger: 'blur' }
-  ],
-  password: [
-    { min: 8, message: '密码长度不能少于8位', trigger: 'blur' }
-  ],
-  status: [
-    { required: true, message: '请选择状态', trigger: 'change' }
-  ],
-  remark: [
-    { max: 500, message: '备注长度不能超过500个字符', trigger: 'blur' }
-  ]
+  phone: [{ pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号格式', trigger: 'blur' }],
+  password: [{ min: 8, message: '密码长度不能少于8位', trigger: 'blur' }],
+  status: [{ required: true, message: '请选择状态', trigger: 'change' }],
+  remark: [{ max: 500, message: '备注长度不能超过500个字符', trigger: 'blur' }],
 }
 
 // 重置密码验证规则
 const resetPasswordRules = {
   newPassword: [
     { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 8, message: '密码长度不能少于8位', trigger: 'blur' }
+    { min: 8, message: '密码长度不能少于8位', trigger: 'blur' },
   ],
   confirmPassword: [
     { required: true, message: '请确认新密码', trigger: 'blur' },
     {
-      validator: (rule: any, value: string, callback: Function) => {
+      validator: (rule: unknown, value: string, callback: (error?: Error) => void) => {
         if (value !== resetPasswordForm.newPassword) {
           callback(new Error('两次输入密码不一致'))
         } else {
           callback()
         }
       },
-      trigger: 'blur'
-    }
-  ]
+      trigger: 'blur',
+    },
+  ],
 }
 
 // 模拟用户数据
@@ -286,7 +279,7 @@ const mockUsers = [
     status: 1,
     updatedAt: '2024-01-15 10:30:00',
     remark: '测试用户',
-    roleIds: [3]
+    roleIds: [3],
   },
   {
     id: 2,
@@ -296,7 +289,7 @@ const mockUsers = [
     status: 1,
     updatedAt: '2024-01-15 09:15:00',
     remark: '管理员',
-    roleIds: [2]
+    roleIds: [2],
   },
   {
     id: 3,
@@ -306,8 +299,8 @@ const mockUsers = [
     status: 2,
     updatedAt: '2024-01-15 08:00:00',
     remark: '禁用用户',
-    roleIds: [3]
-  }
+    roleIds: [3],
+  },
 ]
 
 // 初始化数据
@@ -321,7 +314,7 @@ const loadUsers = () => {
   // 模拟API调用
   setTimeout(() => {
     usersList.value = mockUsers
-    applyFilters()  // 应用筛选
+    applyFilters() // 应用筛选
     loading.value = false
   }, 500)
 }
@@ -332,16 +325,17 @@ const applyFilters = () => {
 
   // 状态筛选
   if (searchForm.status !== 0) {
-    filtered = filtered.filter(user => user.status === searchForm.status)
+    filtered = filtered.filter((user) => user.status === searchForm.status)
   }
 
   // 关键字筛选
   if (searchForm.keyword.trim()) {
     const keyword = searchForm.keyword.toLowerCase()
-    filtered = filtered.filter(user =>
-      user.name.toLowerCase().includes(keyword) ||
-      user.email.toLowerCase().includes(keyword) ||
-      user.phone.includes(keyword)
+    filtered = filtered.filter(
+      (user) =>
+        user.name.toLowerCase().includes(keyword) ||
+        user.email.toLowerCase().includes(keyword) ||
+        user.phone.includes(keyword),
     )
   }
 
@@ -370,23 +364,19 @@ const handleAdd = () => {
 }
 
 // 编辑用户
-const handleEdit = (row: any) => {
+const handleEdit = (row: User) => {
   dialogType.value = 'edit'
   Object.assign(userForm, row)
   dialogVisible.value = true
 }
 
 // 删除用户
-const handleDelete = (row: any) => {
-  ElMessageBox.confirm(
-    `是否确认删除${row.name}？`,
-    '确认删除',
-    {
-      confirmButtonText: '确定',
-      cancelButtonText: '取消',
-      type: 'warning'
-    }
-  ).then(() => {
+const handleDelete = (row: User) => {
+  ElMessageBox.confirm(`是否确认删除${row.name}？`, '确认删除', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+  }).then(() => {
     // 模拟删除操作
     ElMessage.success('删除成功')
     loadUsers()
@@ -394,7 +384,7 @@ const handleDelete = (row: any) => {
 }
 
 // 重置密码
-const handleResetPassword = (row: any) => {
+const handleResetPassword = (row: User) => {
   currentUserId.value = row.id
   resetPasswordForm.newPassword = ''
   resetPasswordForm.confirmPassword = ''
@@ -417,7 +407,7 @@ const handleSubmit = async () => {
       loadUsers()
     }, 1000)
   } catch (error) {
-    console.log('表单验证失败')
+    console.error('用户表单验证失败:', error)
   }
 }
 
@@ -436,7 +426,7 @@ const handleResetPasswordSubmit = async () => {
       submitting.value = false
     }, 1000)
   } catch (error) {
-    console.log('表单验证失败')
+    console.error('密码重置验证失败:', error)
   }
 }
 
@@ -450,7 +440,7 @@ const resetUserForm = () => {
     password: '',
     status: 1,
     remark: '',
-    roleIds: []
+    roleIds: [],
   })
 }
 
