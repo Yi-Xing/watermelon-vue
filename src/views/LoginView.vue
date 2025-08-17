@@ -79,7 +79,7 @@ onMounted(() => {
               @submit.prevent="handleLogin"
             >
               <el-form-item prop="username">
-                <el-input v-model="loginForm.username" placeholder="请输入用户名" size="large">
+                <el-input v-model="loginForm.username" placeholder="请输入手机号/邮箱" size="large">
                   <template #prefix>
                     <el-icon><User /></el-icon>
                   </template>

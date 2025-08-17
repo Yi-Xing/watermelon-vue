@@ -81,7 +81,7 @@ export interface UserListItem {
   createdTime: string
   updatedBy: string | null
   updatedTime: string
-  roles: string[] | null
+  roles: Array<{ id: number; name: string }> | null
 }
 
 // 用户详情（包含更多信息）
@@ -103,7 +103,7 @@ export interface UserDetail {
     name: string
   } | null
   updatedTime: string
-  roles: string[]
+  roles: Array<{ id: number; name: string }>
 }
 
 // 获取用户详情响应

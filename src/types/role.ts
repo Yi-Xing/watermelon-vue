@@ -103,7 +103,7 @@ export interface Resource {
 
 // 更新角色资源请求
 export interface UpdateRoleResourcesRequest {
-  roleId: number
+  id: number
   resourceIds: number[]
 }
 

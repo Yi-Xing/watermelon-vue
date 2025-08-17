@@ -179,6 +179,7 @@ import {
   deleteUser,
   resetPassword,
 } from '@/api/admin/user'
+import { getRoleList } from '@/api/admin/role'
 import type {
   UserListItem,
   CreateUserRequest,
@@ -186,6 +187,7 @@ import type {
   ResetPasswordRequest,
   PageParams,
 } from '@/types/user'
+import type { Role } from '@/types/role'
 
 // 搜索表单
 const searchForm = reactive({
@@ -233,11 +235,7 @@ const userForm = reactive({
 })
 
 // 角色选项
-const roleOptions = ref([
-  { id: 1, name: '超级管理员' },
-  { id: 2, name: '普通管理员' },
-  { id: 3, name: '普通用户' },
-])
+const roleOptions = ref<Role[]>([])
 
 // 重置密码相关
 const resetPasswordVisible = ref(false)
@@ -291,7 +289,26 @@ const resetPasswordRules = {
 // 初始化数据
 onMounted(() => {
   loadUsers()
+  loadRoles()
 })
+
+// 加载角色列表
+const loadRoles = async () => {
+  try {
+    const params = {
+      name: '',
+      state: 1, // 只获取启用状态的角色
+      pageNum: 1,
+      pageSize: 100, // 获取足够多的角色
+    }
+
+    const response = await getRoleList(params)
+    roleOptions.value = response.data.dataList
+  } catch (error) {
+    console.error('获取角色列表失败:', error)
+    ElMessage.error('获取角色列表失败')
+  }
+}
 
 // 加载用户列表
 const loadUsers = async () => {
@@ -362,7 +379,7 @@ const handleEdit = async (row: UserListItem) => {
       password: '', // 编辑时不显示密码
       state: userDetail.state,
       remark: userDetail.remark,
-      roleIds: userDetail.roles || [],
+      roleIds: userDetail.roles ? userDetail.roles.map((role) => role.id) : [],
     })
 
     dialogVisible.value = true

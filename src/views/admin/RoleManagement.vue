@@ -133,7 +133,6 @@
           :props="treeProps"
           show-checkbox
           node-key="id"
-          :default-checked-keys="selectedResourceIds"
           :default-expanded-keys="expandedKeys"
         />
       </div>
@@ -148,7 +147,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, nextTick } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus } from '@element-plus/icons-vue'
 import {
@@ -157,16 +156,11 @@ import {
   updateRole,
   deleteRole,
   getRoleDetail,
-  getRoleResources,
   updateRoleResources,
 } from '@/api/admin/role'
-import type {
-  Role,
-  CreateRoleRequest,
-  UpdateRoleRequest,
-  Resource,
-  RolePageParams,
-} from '@/types/role'
+import { getResourceTree } from '@/api/admin/resource'
+import type { Role, CreateRoleRequest, UpdateRoleRequest, RolePageParams } from '@/types/role'
+import type { Resource as ResourceType } from '@/types/resource'
 
 // 搜索表单
 const searchForm = reactive({
@@ -214,7 +208,7 @@ const roleRules = {
 
 // 资源树相关
 const resourcesTreeRef = ref()
-const resourcesTree = ref<Resource[]>([])
+const resourcesTree = ref<ResourceType[]>([])
 const selectedResourceIds = ref<number[]>([])
 const expandedKeys = ref<number[]>([])
 
@@ -222,6 +216,40 @@ const expandedKeys = ref<number[]>([])
 const treeProps = {
   children: 'children',
   label: 'name',
+}
+
+// 设置树形组件的选中状态
+const setTreeCheckedKeys = () => {
+  if (!resourcesTreeRef.value || !selectedResourceIds.value.length) return
+
+  // 计算需要选中的节点ID（包括半选状态的父节点）
+  const checkedKeys = calculateCheckedKeys(resourcesTree.value, selectedResourceIds.value)
+
+  // 设置选中状态
+  resourcesTreeRef.value.setCheckedKeys(checkedKeys)
+}
+
+// 计算需要选中的节点ID，过滤掉父节点，只保留叶子节点
+const calculateCheckedKeys = (resources: ResourceType[], selectedIds: number[]): number[] => {
+  // 找出所有叶子节点（没有children或children为空的节点）
+  const leafNodeIds = new Set<number>()
+
+  const findLeafNodes = (resourceList: ResourceType[]) => {
+    resourceList.forEach((resource) => {
+      if (!resource.children || resource.children.length === 0) {
+        // 这是叶子节点
+        leafNodeIds.add(Number(resource.id))
+      } else {
+        // 这是父节点，递归查找子节点
+        findLeafNodes(resource.children)
+      }
+    })
+  }
+
+  findLeafNodes(resources)
+
+  // 只返回既是叶子节点又在selectedIds中的ID
+  return selectedIds.filter((id) => leafNodeIds.has(id))
 }
 
 // 监听状态变化，自动触发搜索
@@ -267,35 +295,28 @@ const loadRoles = async () => {
 // 加载资源树
 const loadResources = async () => {
   try {
-    // 这里需要调用获取资源树的API
-    // 暂时使用模拟数据
-    resourcesTree.value = [
-      {
-        id: 1,
-        name: '系统管理',
-        children: [
-          { id: 11, name: '用户管理' },
-          { id: 12, name: '角色管理' },
-          { id: 13, name: '资源管理' },
-        ],
-      },
-      {
-        id: 2,
-        name: '内容管理',
-        children: [
-          { id: 21, name: '文章管理' },
-          { id: 22, name: '分类管理' },
-        ],
-      },
-      {
-        id: 3,
-        name: '数据统计',
-        children: [
-          { id: 31, name: '访问统计' },
-          { id: 32, name: '用户统计' },
-        ],
-      },
-    ]
+    const params = {
+      name: '',
+      state: 1, // 只获取启用状态的资源
+      code: '',
+    }
+
+    const response = await getResourceTree(params)
+    resourcesTree.value = response.data || []
+
+    // 设置默认展开的节点（展开所有父节点）
+    const extractParentIds = (resources: ResourceType[]): number[] => {
+      const ids: number[] = []
+      resources.forEach((resource) => {
+        if (resource.children && resource.children.length > 0) {
+          ids.push(Number(resource.id))
+          ids.push(...extractParentIds(resource.children))
+        }
+      })
+      return ids
+    }
+
+    expandedKeys.value = extractParentIds(resourcesTree.value)
   } catch (error) {
     console.error('获取资源树失败:', error)
     ElMessage.error('获取资源树失败')
@@ -378,25 +399,23 @@ const handleUpdateResources = async (row: Role) => {
     currentRoleId.value = row.id
     loading.value = true
 
-    // 调用API获取角色已有资源
-    const response = await getRoleResources(row.id)
-    const roleResources = response.data
+    // 调用API获取角色详情，包含资源ID列表
+    const response = await getRoleDetail(row.id)
+    const roleDetail = response.data
 
-    // 提取资源ID列表
-    const extractResourceIds = (resources: Resource[]): number[] => {
-      const ids: number[] = []
-      resources.forEach((resource) => {
-        ids.push(resource.id)
-        if (resource.children) {
-          ids.push(...extractResourceIds(resource.children))
-        }
-      })
-      return ids
+    // 使用角色详情中的 resourceIds
+    selectedResourceIds.value = roleDetail.resourceIds || []
+
+    // 确保资源树已加载
+    if (resourcesTree.value.length === 0) {
+      await loadResources()
     }
 
-    selectedResourceIds.value = extractResourceIds(roleResources)
-    expandedKeys.value = [1, 2, 3] // 默认展开所有父节点
     resourcesDialogVisible.value = true
+
+    // 等待DOM更新后设置选中状态
+    await nextTick()
+    setTreeCheckedKeys()
   } catch (error) {
     console.error('获取角色资源失败:', error)
     ElMessage.error('获取角色资源失败')
@@ -460,6 +479,9 @@ const handleUpdateResourcesSubmit = async () => {
     await updateRoleResources(currentRoleId.value, allResourceIds)
     ElMessage.success('资源更新成功')
     resourcesDialogVisible.value = false
+
+    // 刷新角色列表
+    loadRoles()
   } catch (error) {
     console.error('更新角色资源失败:', error)
     ElMessage.error(error instanceof Error ? error.message : '更新角色资源失败')

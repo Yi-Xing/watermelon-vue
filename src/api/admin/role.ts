@@ -97,24 +97,9 @@ export async function deleteRole(roleId: number): Promise<DeleteRoleResponse> {
   }
 }
 
-// 获取角色资源
-export async function getRoleResources(roleId: number): Promise<GetRoleResourcesResponse> {
-  const { getAuthToken } = useApi()
-  const { httpGet } = useHttp()
-
-  const token = getAuthToken()
-  const response = await httpGet<GetRoleResourcesResponse>(`/api/role/${roleId}/resources`, token)
-
-  if (response.code === 200) {
-    return response
-  } else {
-    throw new Error(response.message || '获取角色资源失败')
-  }
-}
-
 // 更新角色资源
 export async function updateRoleResources(
-  roleId: number,
+  id: number,
   resourceIds: number[],
 ): Promise<UpdateRoleResourcesResponse> {
   const { getAuthToken } = useApi()
@@ -122,12 +107,12 @@ export async function updateRoleResources(
 
   const token = getAuthToken()
   const requestData: UpdateRoleResourcesRequest = {
-    roleId,
+    id,
     resourceIds,
   }
 
   const response = await httpPut<UpdateRoleResourcesResponse>(
-    '/api/role/resources',
+    '/api/role/resource',
     requestData,
     token,
   )
