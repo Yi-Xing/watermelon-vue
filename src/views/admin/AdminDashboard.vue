@@ -107,7 +107,7 @@ const stats = reactive({
   totalUsers: 1250,
   activeUsers: 892,
   totalRoles: 8,
-  totalResources: 156
+  totalResources: 156,
 })
 
 // 最近活动
@@ -116,26 +116,26 @@ const recentActivities = ref([
     id: 1,
     content: '新用户 张三 注册成功',
     time: '2024-01-15 10:30',
-    type: 'success'
+    type: 'success',
   },
   {
     id: 2,
     content: '角色权限配置已更新',
     time: '2024-01-15 09:15',
-    type: 'primary'
+    type: 'primary',
   },
   {
     id: 3,
     content: '系统维护完成',
     time: '2024-01-15 08:00',
-    type: 'info'
+    type: 'info',
   },
   {
     id: 4,
     content: '用户 李四 登录系统',
     time: '2024-01-15 07:45',
-    type: 'success'
-  }
+    type: 'success',
+  },
 ])
 
 onMounted(() => {
@@ -178,22 +178,6 @@ onMounted(() => {
   justify-content: center;
   font-size: 24px;
   color: #fff;
-}
-
-.users-icon {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.active-icon {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-}
-
-.roles-icon {
-  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-}
-
-.resources-icon {
-  background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
 }
 
 .stat-info {

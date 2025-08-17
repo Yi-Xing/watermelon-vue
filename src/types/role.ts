@@ -114,11 +114,3 @@ export interface UpdateRoleResourcesResponse {
   message: string
   data: boolean
 }
-
-// 获取角色资源响应
-export interface GetRoleResourcesResponse {
-  code: number
-  success: boolean
-  message: string
-  data: Resource[]
-}

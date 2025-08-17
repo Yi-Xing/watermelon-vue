@@ -12,7 +12,6 @@ import { RouterView } from 'vue-router'
   </header>
 
   <!-- RouterView 是Vue Router工作的关键组件，没有它，路由配置就无法生效。 -->
-  <!-- 例如：访问 / 显示HomeView，访问 /about 显示AboutView -->
   <RouterView />
 </template>
 
@@ -26,9 +25,9 @@ import { RouterView } from 'vue-router'
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
+    'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

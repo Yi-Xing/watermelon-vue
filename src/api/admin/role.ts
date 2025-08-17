@@ -11,7 +11,6 @@ import type {
   RoleDetailResponse,
   UpdateRoleResourcesRequest,
   UpdateRoleResourcesResponse,
-  GetRoleResourcesResponse,
 } from '@/types/role'
 
 // 创建角色
