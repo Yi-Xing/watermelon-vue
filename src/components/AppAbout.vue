@@ -26,17 +26,4 @@
 .copyright p {
   margin: 5px 0;
 }
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .footer-links {
-    flex-direction: column;
-    gap: 15px;
-    align-items: center;
-  }
-
-  .about-content {
-    padding: 15px 0;
-  }
-}
 </style>
