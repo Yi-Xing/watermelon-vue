@@ -70,7 +70,7 @@ import { reactive, ref, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
-import { getCurrentUser, logout } from '@/api/admin/user'
+import { getCurrentUser, logout } from '@/api/auth'
 import type { CurrentUser } from '@/types/user'
 import DefaultAvatar from '@/assets/DefaultAvatar.png'
 
@@ -88,6 +88,7 @@ const currentUser = reactive<CurrentUser>({
   remark: '',
   createdTime: '',
   updatedTime: '',
+  expireTime: '',
 })
 
 const profileDialogVisible = ref(false)

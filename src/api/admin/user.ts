@@ -1,8 +1,6 @@
 import { useHttp } from '@/composables/useHttp'
 import { useApi } from '@/composables/useApi'
 import type {
-  CurrentUser,
-  ApiResponse,
   CreateUserRequest,
   CreateUserResponse,
   PageParams,
@@ -14,21 +12,6 @@ import type {
   ResetPasswordResponse,
   DeleteUserResponse,
 } from '@/types/user'
-
-// 获取当前用户信息
-export async function getCurrentUser(): Promise<CurrentUser> {
-  const { getAuthToken } = useApi()
-  const { httpGet } = useHttp()
-
-  const token = getAuthToken()
-  const response = await httpGet<ApiResponse<CurrentUser>>('/api/user/current', token)
-
-  if (response.code === 200) {
-    return response.data
-  } else {
-    throw new Error(response.message || '获取用户信息失败')
-  }
-}
 
 // 创建用户
 export async function createUser(userData: CreateUserRequest): Promise<CreateUserResponse> {
@@ -127,27 +110,5 @@ export async function deleteUser(userId: number): Promise<DeleteUserResponse> {
     return response
   } else {
     throw new Error(response.message || '删除用户失败')
-  }
-}
-
-// 退出登录
-export async function logout(): Promise<void> {
-  const { getAuthToken } = useApi()
-  const { httpPost } = useHttp()
-  const { useUserStore } = await import('@/stores/user')
-
-  const token = getAuthToken()
-  const response = await httpPost<{ code: number; success: boolean; message: string; data: null }>(
-    '/api/user/logout',
-    {},
-    token,
-  )
-
-  if (response.code === 200) {
-    // 退出成功后清理前端状态
-    const userStore = useUserStore()
-    userStore.logout()
-  } else {
-    throw new Error(response.message || '退出登录失败')
   }
 }

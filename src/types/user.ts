@@ -7,6 +7,7 @@ export interface CurrentUser {
   remark: string
   createdTime: string
   updatedTime: string
+  expireTime: string
 }
 
 // 创建用户请求参数
