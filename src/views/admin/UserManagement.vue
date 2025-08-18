@@ -260,7 +260,7 @@ const userFormRules = {
     },
   ],
   phone: [{ pattern: /^$|^1[3-9]\d{9}$/, message: '请输入正确的手机号格式', trigger: 'blur' }],
-  password: [{ min: 8, message: '密码长度不能少于8位', trigger: 'blur' }],
+  password: [{ min: 6, message: '密码长度不能少于6位', trigger: 'blur' }],
   state: [{ required: true, message: '请选择状态', trigger: 'change' }],
   remark: [{ max: 500, message: '备注长度不能超过500个字符', trigger: 'blur' }],
 }
@@ -269,7 +269,7 @@ const userFormRules = {
 const resetPasswordRules = {
   newPassword: [
     { required: true, message: '请输入新密码', trigger: 'blur' },
-    { min: 8, message: '密码长度不能少于8位', trigger: 'blur' },
+    { min: 6, message: '密码长度不能少于6位', trigger: 'blur' },
   ],
   confirmPassword: [
     { required: true, message: '请确认新密码', trigger: 'blur' },
@@ -374,8 +374,8 @@ const handleEdit = async (row: UserListItem) => {
     const userRoleIds = userDetail.roles ? userDetail.roles.map((role) => role.id) : []
 
     // 过滤掉不存在的角色，只保留在roleOptions中存在的角色
-    const validRoleIds = userRoleIds.filter(roleId =>
-      roleOptions.value.some(role => role.id === roleId)
+    const validRoleIds = userRoleIds.filter((roleId) =>
+      roleOptions.value.some((role) => role.id === roleId),
     )
 
     // 填充表单数据

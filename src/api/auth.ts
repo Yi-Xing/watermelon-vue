@@ -5,10 +5,19 @@ import type { LoginRequestPayload, LoginResponseData } from '@/types/auth'
 import type { CurrentUser, ApiResponse } from '@/types/user'
 
 // 登录接口
-export function loginApi(payload: LoginRequestPayload): Promise<LoginResponseData> {
+export async function loginApi(payload: LoginRequestPayload): Promise<LoginResponseData> {
   const { httpPost } = useHttp()
+  const { usePassword } = await import('@/composables/usePassword')
+
+  // 对密码进行加密
+  const { hashPassword } = usePassword()
+  const encryptedPayload = {
+    ...payload,
+    password: hashPassword(payload.password),
+  }
+
   // 登录接口不需要传递 token，使用静态 token
-  return httpPost<LoginResponseData>('/api/user/login', payload)
+  return httpPost<LoginResponseData>('/api/user/login', encryptedPayload)
 }
 
 export async function getCurrentUser(): Promise<CurrentUser> {

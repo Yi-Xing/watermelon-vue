@@ -18,8 +18,16 @@ export async function createUser(userData: CreateUserRequest): Promise<CreateUse
   const { getAuthToken } = useApi()
   const { httpPost } = useHttp()
 
+  // 只有在提供密码时才进行加密
+  const processedUserData = { ...userData }
+  if (userData.password) {
+    const { usePassword } = await import('@/composables/usePassword')
+    const { hashPassword } = usePassword()
+    processedUserData.password = hashPassword(userData.password)
+  }
+
   const token = getAuthToken()
-  const response = await httpPost<CreateUserResponse>('/api/user', userData, token)
+  const response = await httpPost<CreateUserResponse>('/api/user', processedUserData, token)
 
   if (response.code === 200) {
     return response
@@ -87,9 +95,21 @@ export async function resetPassword(
 ): Promise<ResetPasswordResponse> {
   const { getAuthToken } = useApi()
   const { httpPut } = useHttp()
+  const { usePassword } = await import('@/composables/usePassword')
+
+  // 对密码进行加密
+  const { hashPassword } = usePassword()
+  const encryptedPasswordData = {
+    ...passwordData,
+    password: hashPassword(passwordData.password),
+  }
 
   const token = getAuthToken()
-  const response = await httpPut<ResetPasswordResponse>('/api/user/password', passwordData, token)
+  const response = await httpPut<ResetPasswordResponse>(
+    '/api/user/password',
+    encryptedPasswordData,
+    token,
+  )
 
   if (response.code === 200) {
     return response
