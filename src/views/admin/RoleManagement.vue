@@ -81,7 +81,7 @@
         <el-pagination
           v-model:current-page="pagination.currentPage"
           v-model:page-size="pagination.pageSize"
-          :page-sizes="[20, 50, 100]"
+          :page-sizes="[10, 20, 50, 100]"
           :total="pagination.total"
           layout="total, sizes, prev, pager, next, jumper"
           :pager-count="7"
@@ -171,7 +171,7 @@ const searchForm = reactive({
 // 分页信息
 const pagination = reactive({
   currentPage: 1,
-  pageSize: 20,
+  pageSize: 10,
   total: 0,
 })
 

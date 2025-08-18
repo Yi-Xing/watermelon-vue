@@ -71,7 +71,7 @@
         <el-pagination
           v-model:current-page="pagination.currentPage"
           v-model:page-size="pagination.pageSize"
-          :page-sizes="[20, 50, 100]"
+          :page-sizes="[10, 20, 50, 100]"
           :total="pagination.total"
           layout="total, sizes, prev, pager, next, jumper"
           :pager-count="7"
@@ -208,7 +208,7 @@ watch(
 // 分页信息
 const pagination = reactive({
   currentPage: 1,
-  pageSize: 20,
+  pageSize: 10,
   total: 0,
 })
 
@@ -370,6 +370,14 @@ const handleEdit = async (row: UserListItem) => {
     const response = await getUserDetail(row.id)
     const userDetail = response.data
 
+    // 获取用户当前的角色ID列表
+    const userRoleIds = userDetail.roles ? userDetail.roles.map((role) => role.id) : []
+
+    // 过滤掉不存在的角色，只保留在roleOptions中存在的角色
+    const validRoleIds = userRoleIds.filter(roleId =>
+      roleOptions.value.some(role => role.id === roleId)
+    )
+
     // 填充表单数据
     Object.assign(userForm, {
       id: userDetail.id,
@@ -379,7 +387,7 @@ const handleEdit = async (row: UserListItem) => {
       password: '', // 编辑时不显示密码
       state: userDetail.state,
       remark: userDetail.remark,
-      roleIds: userDetail.roles ? userDetail.roles.map((role) => role.id) : [],
+      roleIds: validRoleIds, // 使用过滤后的有效角色ID
     })
 
     dialogVisible.value = true

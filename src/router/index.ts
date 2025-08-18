@@ -13,7 +13,16 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/login',
+      redirect: () => {
+        const userStore = useUserStore()
+        const isLoggedIn = userStore.isLoggedIn
+
+        if (isLoggedIn) {
+          return '/admin/dashboard'
+        } else {
+          return '/login'
+        }
+      },
     },
     {
       path: '/login',
