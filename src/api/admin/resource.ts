@@ -2,7 +2,6 @@ import { useHttp } from '@/composables/useHttp'
 import { useApi } from '@/composables/useApi'
 import type {
   Resource,
-  ResourceSearchForm,
   CreateResourceRequest,
   CreateResourceResponse,
   UpdateResourceRequest,
@@ -10,30 +9,6 @@ import type {
   DeleteResourceResponse,
   ApiResponse,
 } from '@/types/resource'
-
-// 获取资源列表
-export async function getResourceList(
-  params?: ResourceSearchForm,
-): Promise<ApiResponse<Resource[]>> {
-  const { getAuthToken, buildQueryParams } = useApi()
-  const { httpGet } = useHttp()
-
-  const token = getAuthToken()
-  const queryString = buildQueryParams({
-    name: params?.name,
-    code: params?.code,
-    state: params?.state !== 0 ? params?.state : undefined,
-  })
-
-  const url = `/api/resource/list${queryString}`
-  const response = await httpGet<ApiResponse<Resource[]>>(url, token)
-
-  if (response.code === 200) {
-    return response
-  } else {
-    throw new Error(response.message || '获取资源列表失败')
-  }
-}
 
 // 获取资源树
 export async function getResourceTree(params?: {
@@ -51,7 +26,7 @@ export async function getResourceTree(params?: {
     code: params?.code,
   })
 
-  const url = `/api/resource/tree${queryString}`
+  const url = `/api/admin/resource/tree${queryString}`
   const response = await httpGet<ApiResponse<Resource[]>>(url, token)
 
   if (response.code === 200) {
@@ -69,7 +44,7 @@ export async function createResource(
   const { httpPost } = useHttp()
 
   const token = getAuthToken()
-  const response = await httpPost<CreateResourceResponse>('/api/resource', resource, token)
+  const response = await httpPost<CreateResourceResponse>('/api/admin/resource', resource, token)
 
   if (response.code === 200) {
     return response
@@ -86,7 +61,7 @@ export async function updateResource(
   const { httpPut } = useHttp()
 
   const token = getAuthToken()
-  const response = await httpPut<UpdateResourceResponse>('/api/resource', resource, token)
+  const response = await httpPut<UpdateResourceResponse>('/api/admin/resource', resource, token)
 
   if (response.code === 200) {
     return response
@@ -97,11 +72,13 @@ export async function updateResource(
 
 // 删除资源
 export async function deleteResource(id: string | number): Promise<DeleteResourceResponse> {
-  const { getAuthToken } = useApi()
+  const { getAuthToken, buildQueryParams } = useApi()
   const { httpDelete } = useHttp()
 
   const token = getAuthToken()
-  const response = await httpDelete<DeleteResourceResponse>(`/api/resource/${id}`, token)
+  const queryString = buildQueryParams({ id })
+  const url = `/api/admin/resource${queryString}`
+  const response = await httpDelete<DeleteResourceResponse>(url, token)
 
   if (response.code === 200) {
     return response
@@ -112,11 +89,13 @@ export async function deleteResource(id: string | number): Promise<DeleteResourc
 
 // 获取资源详情
 export async function getResourceDetail(id: string | number): Promise<ApiResponse<Resource>> {
-  const { getAuthToken } = useApi()
+  const { getAuthToken, buildQueryParams } = useApi()
   const { httpGet } = useHttp()
 
   const token = getAuthToken()
-  const response = await httpGet<ApiResponse<Resource>>(`/api/resource/${id}`, token)
+  const queryString = buildQueryParams({ id })
+  const url = `/api/admin/resource${queryString}`
+  const response = await httpGet<ApiResponse<Resource>>(url, token)
 
   if (response.code === 200) {
     return response
@@ -145,7 +124,7 @@ export async function importResources(file: File): Promise<{
   const formData = new FormData()
   formData.append('file', file)
 
-  const response = await fetch('/api/resource/import', {
+  const response = await fetch('/api/admin/resource/import', {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -181,7 +160,7 @@ export async function exportResources(params?: {
     code: params?.code,
   })
 
-  const url = `/api/resource/export${queryString}`
+  const url = `/api/admin/resource/export${queryString}`
 
   // 使用fetch直接处理文件流
   const response = await fetch(url, {

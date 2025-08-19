@@ -27,7 +27,7 @@ export async function createUser(userData: CreateUserRequest): Promise<CreateUse
   }
 
   const token = getAuthToken()
-  const response = await httpPost<CreateUserResponse>('/api/user', processedUserData, token)
+  const response = await httpPost<CreateUserResponse>('/api/admin/user', processedUserData, token)
 
   if (response.code === 200) {
     return response
@@ -49,7 +49,7 @@ export async function getUserList(params: PageParams): Promise<UserListResponse>
     pageSize: params.pageSize,
   })
 
-  const url = `/api/user/list${queryString}`
+  const url = `/api/admin/user/list${queryString}`
   const response = await httpGet<UserListResponse>(url, token)
 
   if (response.code === 200) {
@@ -61,11 +61,13 @@ export async function getUserList(params: PageParams): Promise<UserListResponse>
 
 // 获取用户详情
 export async function getUserDetail(userId: number): Promise<UserDetailResponse> {
-  const { getAuthToken } = useApi()
+  const { getAuthToken, buildQueryParams } = useApi()
   const { httpGet } = useHttp()
 
   const token = getAuthToken()
-  const response = await httpGet<UserDetailResponse>(`/api/user/${userId}`, token)
+  const queryString = buildQueryParams({ id: userId })
+  const url = `/api/admin/user${queryString}`
+  const response = await httpGet<UserDetailResponse>(url, token)
 
   if (response.code === 200) {
     return response
@@ -80,7 +82,7 @@ export async function updateUser(userData: UpdateUserRequest): Promise<UpdateUse
   const { httpPut } = useHttp()
 
   const token = getAuthToken()
-  const response = await httpPut<UpdateUserResponse>('/api/user', userData, token)
+  const response = await httpPut<UpdateUserResponse>('/api/admin/user', userData, token)
 
   if (response.code === 200) {
     return response
@@ -106,7 +108,7 @@ export async function resetPassword(
 
   const token = getAuthToken()
   const response = await httpPut<ResetPasswordResponse>(
-    '/api/user/password',
+    '/api/admin/user/password',
     encryptedPasswordData,
     token,
   )
@@ -120,11 +122,13 @@ export async function resetPassword(
 
 // 删除用户
 export async function deleteUser(userId: number): Promise<DeleteUserResponse> {
-  const { getAuthToken } = useApi()
+  const { getAuthToken, buildQueryParams } = useApi()
   const { httpDelete } = useHttp()
 
   const token = getAuthToken()
-  const response = await httpDelete<DeleteUserResponse>(`/api/user/${userId}`, token)
+  const queryString = buildQueryParams({ id: userId })
+  const url = `/api/admin/user${queryString}`
+  const response = await httpDelete<DeleteUserResponse>(url, token)
 
   if (response.code === 200) {
     return response

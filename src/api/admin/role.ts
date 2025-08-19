@@ -19,7 +19,7 @@ export async function createRole(roleData: CreateRoleRequest): Promise<CreateRol
   const { httpPost } = useHttp()
 
   const token = getAuthToken()
-  const response = await httpPost<CreateRoleResponse>('/api/role', roleData, token)
+  const response = await httpPost<CreateRoleResponse>('/api/admin/role', roleData, token)
 
   if (response.code === 200) {
     return response
@@ -41,7 +41,7 @@ export async function getRoleList(params: RolePageParams): Promise<RoleListRespo
     pageSize: params.pageSize,
   })
 
-  const url = `/api/role/list${queryString}`
+  const url = `/api/admin/role/list${queryString}`
   const response = await httpGet<RoleListResponse>(url, token)
 
   if (response.code === 200) {
@@ -53,11 +53,13 @@ export async function getRoleList(params: RolePageParams): Promise<RoleListRespo
 
 // 获取角色详情
 export async function getRoleDetail(roleId: number): Promise<RoleDetailResponse> {
-  const { getAuthToken } = useApi()
+  const { getAuthToken, buildQueryParams } = useApi()
   const { httpGet } = useHttp()
 
   const token = getAuthToken()
-  const response = await httpGet<RoleDetailResponse>(`/api/role/${roleId}`, token)
+  const queryString = buildQueryParams({ id: roleId })
+  const url = `/api/admin/role${queryString}`
+  const response = await httpGet<RoleDetailResponse>(url, token)
 
   if (response.code === 200) {
     return response
@@ -72,7 +74,7 @@ export async function updateRole(roleData: UpdateRoleRequest): Promise<UpdateRol
   const { httpPut } = useHttp()
 
   const token = getAuthToken()
-  const response = await httpPut<UpdateRoleResponse>('/api/role', roleData, token)
+  const response = await httpPut<UpdateRoleResponse>('/api/admin/role', roleData, token)
 
   if (response.code === 200) {
     return response
@@ -83,11 +85,13 @@ export async function updateRole(roleData: UpdateRoleRequest): Promise<UpdateRol
 
 // 删除角色
 export async function deleteRole(roleId: number): Promise<DeleteRoleResponse> {
-  const { getAuthToken } = useApi()
+  const { getAuthToken, buildQueryParams } = useApi()
   const { httpDelete } = useHttp()
 
   const token = getAuthToken()
-  const response = await httpDelete<DeleteRoleResponse>(`/api/role/${roleId}`, token)
+  const queryString = buildQueryParams({ id: roleId })
+  const url = `/api/admin/role${queryString}`
+  const response = await httpDelete<DeleteRoleResponse>(url, token)
 
   if (response.code === 200) {
     return response
@@ -111,7 +115,7 @@ export async function updateRoleResources(
   }
 
   const response = await httpPut<UpdateRoleResourcesResponse>(
-    '/api/role/resource',
+    '/api/admin/role/resource',
     requestData,
     token,
   )
