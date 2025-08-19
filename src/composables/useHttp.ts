@@ -1,5 +1,6 @@
 import { envConfig } from '@/config/env'
 import { useUserStore } from '@/stores/user'
+import { LOGIN_EXPIRED_MESSAGE } from '@/constants/localStorageKey'
 
 // 处理401未授权错误
 function handleUnauthorized() {
@@ -9,7 +10,7 @@ function handleUnauthorized() {
   userStore.logout()
 
   // 将提示信息存储到localStorage，让登录页面显示
-  localStorage.setItem('login_expired_message', '登录已失效，请重新登录')
+  localStorage.setItem(LOGIN_EXPIRED_MESSAGE, '登录已失效，请重新登录')
 
   // 重定向到登录页面
   if (window.location.pathname !== '/login') {
