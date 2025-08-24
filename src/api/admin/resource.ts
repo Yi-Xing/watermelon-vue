@@ -8,9 +8,37 @@ import type {
   UpdateResourceResponse,
   DeleteResourceResponse,
   ApiResponse,
+  PageData,
+  ResourceSearchForm,
 } from '@/types/resource'
 
-// 获取资源树
+// 获取资源列表（分页）
+export async function getResourceList(
+  params: Partial<ResourceSearchForm>,
+): Promise<ApiResponse<PageData<Resource>>> {
+  const { getAuthToken, buildQueryParams } = useApi()
+  const { httpGet } = useHttp()
+
+  const token = getAuthToken()
+  const queryString = buildQueryParams({
+    name: params?.name,
+    code: params?.code,
+    state: params?.state !== 0 ? params?.state : undefined,
+    pageNum: params?.pageNum || 1,
+    pageSize: params?.pageSize || 20,
+  })
+
+  const url = `/api/admin/resource/list${queryString}`
+  const response = await httpGet<ApiResponse<PageData<Resource>>>(url, token)
+
+  if (response.code === 200) {
+    return response
+  } else {
+    throw new Error(response.message || '获取资源列表失败')
+  }
+}
+
+// 获取资源树（保留供资源选择器使用）
 export async function getResourceTree(params?: {
   name?: string
   state?: number

@@ -158,9 +158,9 @@ import {
   getRoleDetail,
   updateRoleResources,
 } from '@/api/admin/role'
-import { getResourceTree } from '@/api/admin/resource'
+import { getResourceRelationTree } from '@/api/admin/resourceRelation'
 import type { Role, CreateRoleRequest, UpdateRoleRequest, RolePageParams } from '@/types/role'
-import type { Resource as ResourceType } from '@/types/resource'
+import type { ResourceRelationTreeNode } from '@/types/resourceRelation'
 
 // 搜索表单
 const searchForm = reactive({
@@ -208,7 +208,7 @@ const roleRules = {
 
 // 资源树相关
 const resourcesTreeRef = ref()
-const resourcesTree = ref<ResourceType[]>([])
+const resourcesTree = ref<ResourceRelationTreeNode[]>([])
 const selectedResourceIds = ref<number[]>([])
 const expandedKeys = ref<number[]>([])
 
@@ -222,34 +222,28 @@ const treeProps = {
 const setTreeCheckedKeys = () => {
   if (!resourcesTreeRef.value || !selectedResourceIds.value.length) return
 
-  // 计算需要选中的节点ID（包括半选状态的父节点）
-  const checkedKeys = calculateCheckedKeys(resourcesTree.value, selectedResourceIds.value)
+  // 收集所有需要选中的节点ID（包括重复ID）
+  const allCheckedKeys: number[] = []
 
-  // 设置选中状态
-  resourcesTreeRef.value.setCheckedKeys(checkedKeys)
-}
-
-// 计算需要选中的节点ID，过滤掉父节点，只保留叶子节点
-const calculateCheckedKeys = (resources: ResourceType[], selectedIds: number[]): number[] => {
-  // 找出所有叶子节点（没有children或children为空的节点）
-  const leafNodeIds = new Set<number>()
-
-  const findLeafNodes = (resourceList: ResourceType[]) => {
+  const collectAllMatchingKeys = (resourceList: ResourceRelationTreeNode[]) => {
     resourceList.forEach((resource) => {
       if (!resource.children || resource.children.length === 0) {
-        // 这是叶子节点
-        leafNodeIds.add(Number(resource.id))
+        // 这是叶子节点，如果在权限列表中则添加到选中列表
+        if (selectedResourceIds.value.includes(Number(resource.id))) {
+          allCheckedKeys.push(Number(resource.id))
+        }
       } else {
         // 这是父节点，递归查找子节点
-        findLeafNodes(resource.children)
+        collectAllMatchingKeys(resource.children)
       }
     })
   }
 
-  findLeafNodes(resources)
-
-  // 只返回既是叶子节点又在selectedIds中的ID
-  return selectedIds.filter((id) => leafNodeIds.has(id))
+  // 收集所有匹配的节点ID
+  collectAllMatchingKeys(resourcesTree.value)
+  console.log('allCheckedKeys', allCheckedKeys)
+  // 使用setCheckedKeys一次性设置所有选中状态
+  resourcesTreeRef.value.setCheckedKeys(allCheckedKeys)
 }
 
 // 监听状态变化，自动触发搜索
@@ -301,11 +295,11 @@ const loadResources = async () => {
       code: '',
     }
 
-    const response = await getResourceTree(params)
+    const response = await getResourceRelationTree(params)
     resourcesTree.value = response.data || []
 
     // 设置默认展开的节点（展开所有父节点）
-    const extractParentIds = (resources: ResourceType[]): number[] => {
+    const extractParentIds = (resources: ResourceRelationTreeNode[]): number[] => {
       const ids: number[] = []
       resources.forEach((resource) => {
         if (resource.children && resource.children.length > 0) {
@@ -396,8 +390,19 @@ const handleDelete = async (row: Role) => {
 // 更新资源
 const handleUpdateResources = async (row: Role) => {
   try {
+    // 清理之前的状态
+    selectedResourceIds.value = []
+    currentRoleId.value = null
+    if (resourcesTreeRef.value) {
+      resourcesTreeRef.value.setCheckedKeys([])
+    }
+
+    // 设置当前角色ID
     currentRoleId.value = row.id
     loading.value = true
+
+    // 重新加载最新的资源树数据
+    await loadResources()
 
     // 调用API获取角色详情，包含资源ID列表
     const response = await getRoleDetail(row.id)
@@ -405,11 +410,6 @@ const handleUpdateResources = async (row: Role) => {
 
     // 使用角色详情中的 resourceIds
     selectedResourceIds.value = roleDetail.resourceIds || []
-
-    // 确保资源树已加载
-    if (resourcesTree.value.length === 0) {
-      await loadResources()
-    }
 
     resourcesDialogVisible.value = true
 

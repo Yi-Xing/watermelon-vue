@@ -7,6 +7,7 @@ import AdminDashboard from '../views/admin/AdminDashboard.vue'
 import UserManagement from '../views/admin/UserManagement.vue'
 import RoleManagement from '../views/admin/RoleManagement.vue'
 import ResourceManagement from '../views/admin/ResourceManagement.vue'
+import ResourceRelationManagement from '../views/admin/ResourceRelationManagement.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -56,6 +57,11 @@ const router = createRouter({
           path: 'resources',
           name: 'admin-resources',
           component: ResourceManagement,
+        },
+        {
+          path: 'resource-relations',
+          name: 'admin-resource-relations',
+          component: ResourceRelationManagement,
         },
       ],
     },

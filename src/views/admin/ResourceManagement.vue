@@ -66,33 +66,26 @@
 
     <!-- 资源列表 -->
     <el-card class="resources-table-card">
-      <el-table
-        :data="resourcesList"
-        v-loading="loading"
-        stripe
-        row-key="id"
-        :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
-        default-expand-all
-      >
-        <el-table-column prop="name" label="名称" :width="nameColumnWidth" />
+      <el-table :data="resourcesList" v-loading="loading" stripe>
         <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column prop="name" label="名称" width="200" />
         <el-table-column prop="type" label="类型" width="100">
           <template #default="{ row }">
             <el-tag :type="getTypeTagType(row.type)">
-              {{ getTypeLabel(row.type) }}
+              {{ row.typeDesc }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="code" label="资源Code" width="300" />
-        <el-table-column prop="orderNum" label="显示顺序" width="100" />
         <el-table-column prop="state" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.state === ResourceStatus.ENABLED ? 'success' : 'danger'">
-              {{ row.state === ResourceStatus.ENABLED ? '启用' : '禁用' }}
+              {{ row.stateDesc }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200">
+        <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <div class="action-buttons">
               <el-button type="primary" size="small" @click="handleEdit(row)"> 编辑 </el-button>
@@ -101,6 +94,20 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <!-- 分页 -->
+      <div class="pagination-wrapper">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          :total="total"
+          layout="total, sizes, prev, pager, next, jumper"
+          :pager-count="7"
+          @current-change="handleCurrentChange"
+          @size-change="handleSizeChange"
+        />
+      </div>
     </el-card>
 
     <!-- 新增/编辑资源对话框 -->
@@ -115,18 +122,6 @@
         :rules="resourceFormRules"
         label-width="120px"
       >
-        <el-form-item label="上级资源" prop="parentId">
-          <el-input
-            v-model="resourceForm.parentName"
-            placeholder="请选择上级资源"
-            readonly
-            @click="showParentSelector = true"
-          >
-            <template #append>
-              <el-button @click="showParentSelector = true">选择</el-button>
-            </template>
-          </el-input>
-        </el-form-item>
         <el-form-item label="名称" prop="name">
           <el-input v-model="resourceForm.name" placeholder="请输入资源名称" />
         </el-form-item>
@@ -135,14 +130,13 @@
             <el-radio :label="ResourceType.PAGE">页面</el-radio>
             <el-radio :label="ResourceType.BUTTON">按钮</el-radio>
             <el-radio :label="ResourceType.API">接口</el-radio>
+            <el-radio :label="ResourceType.DIRECTORY">目录</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="资源Code" prop="code">
           <el-input v-model="resourceForm.code" placeholder="请输入资源Code" />
         </el-form-item>
-        <el-form-item label="显示顺序" prop="orderNum">
-          <el-input-number v-model="resourceForm.orderNum" :min="1" style="width: 100%" />
-        </el-form-item>
+
         <el-form-item label="状态" prop="state">
           <el-radio-group v-model="resourceForm.state">
             <el-radio :label="ResourceStatus.ENABLED">启用</el-radio>
@@ -161,23 +155,6 @@
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
         <el-button type="primary" @click="handleSubmit" :loading="submitting"> 确定 </el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 上级资源选择器 -->
-    <el-dialog v-model="showParentSelector" title="选择上级资源" width="600px">
-      <div class="parent-selector">
-        <el-tree
-          :data="resourcesTree"
-          :props="{ label: 'name', children: 'children' }"
-          node-key="id"
-          highlight-current
-          @node-click="handleParentSelect"
-        />
-      </div>
-      <template #footer>
-        <el-button @click="showParentSelector = false">取消</el-button>
-        <el-button type="primary" @click="confirmParentSelect">确定</el-button>
       </template>
     </el-dialog>
 
@@ -226,10 +203,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted, computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Upload, Download } from '@element-plus/icons-vue'
-import type { Resource, ResourceForm, ResourceSearchForm, ResourceTreeNode } from '@/types/resource'
+import type { Resource, ResourceForm, ResourceSearchForm } from '@/types/resource'
 import { ResourceType, ResourceStatus } from '@/types/resource'
 import * as resourceApi from '@/api/admin/resource'
 import type { CreateResourceRequest, UpdateResourceRequest } from '@/types/resource'
@@ -239,11 +216,16 @@ const searchForm = reactive<ResourceSearchForm>({
   name: '',
   code: '',
   state: 0, // 默认选择"全部"
+  pageNum: 1,
+  pageSize: 10,
 })
 
-// 资源列表
+// 资源列表和分页
 const resourcesList = ref<Resource[]>([])
 const loading = ref(false)
+const total = ref(0)
+const currentPage = ref(1)
+const pageSize = ref(10)
 
 // 对话框相关
 const dialogVisible = ref(false)
@@ -257,7 +239,7 @@ const exporting = ref(false)
 // 资源表单
 const resourceForm = reactive<ResourceForm>({
   id: '',
-  parentId: '',
+  parentId: 0,
   parentName: '',
   name: '',
   type: ResourceType.PAGE,
@@ -266,11 +248,6 @@ const resourceForm = reactive<ResourceForm>({
   state: ResourceStatus.ENABLED,
   remark: '',
 })
-
-// 上级资源选择器
-const showParentSelector = ref(false)
-const selectedParent = ref<ResourceTreeNode | null>(null)
-const resourcesTree = ref<ResourceTreeNode[]>([])
 
 // 导入结果弹窗
 const importResultVisible = ref(false)
@@ -294,14 +271,23 @@ const importResult = ref<{
 const resourceFormRules = {
   name: [
     { required: true, message: '请输入资源名称', trigger: 'blur' },
-    { min: 3, max: 10, message: '名称长度在 3 到 10 个字符', trigger: 'blur' },
+    { min: 2, max: 10, message: '名称长度在 2 到 10 个字符', trigger: 'blur' },
+    {
+      validator: (rule: unknown, value: string, callback: (error?: Error) => void) => {
+        if (value && value.includes('/')) {
+          callback(new Error('名称不能包含"/"字符'))
+        } else {
+          callback()
+        }
+      },
+      trigger: 'blur',
+    },
   ],
   type: [{ required: true, message: '请选择资源类型', trigger: 'change' }],
   code: [
     { required: true, message: '请输入资源Code', trigger: 'blur' },
     { min: 1, max: 100, message: '资源Code长度在 1 到 100 个字符', trigger: 'blur' },
   ],
-  orderNum: [{ required: true, message: '请输入显示顺序', trigger: 'blur' }],
   state: [{ required: true, message: '请选择状态', trigger: 'change' }],
   remark: [{ max: 500, message: '备注长度不能超过500个字符', trigger: 'blur' }],
 }
@@ -315,14 +301,17 @@ onMounted(() => {
 const loadResources = async () => {
   loading.value = true
   try {
-    const response = await resourceApi.getResourceTree({
+    const response = await resourceApi.getResourceList({
       name: searchForm.name,
       code: searchForm.code,
       state: searchForm.state,
+      pageNum: currentPage.value,
+      pageSize: pageSize.value,
     })
     if (response.success && response.data) {
-      resourcesList.value = response.data
-      resourcesTree.value = [{ id: 0, name: '顶级资源', children: response.data }]
+      resourcesList.value = response.data.dataList
+      total.value = response.data.total
+      currentPage.value = response.data.current
     } else {
       throw new Error(response.message || '获取资源列表失败')
     }
@@ -332,6 +321,19 @@ const loadResources = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// 分页变化处理
+const handleCurrentChange = (page: number) => {
+  currentPage.value = page
+  loadResources()
+}
+
+// 每页数量变化处理
+const handleSizeChange = (size: number) => {
+  pageSize.value = size
+  currentPage.value = 1
+  loadResources()
 }
 
 // 搜索
@@ -345,6 +347,7 @@ const handleReset = () => {
   searchForm.name = ''
   searchForm.code = ''
   searchForm.state = 0
+  currentPage.value = 1
   loadResources()
 }
 
@@ -369,12 +372,12 @@ const handleEdit = async (row: Resource) => {
       // 填充表单数据
       Object.assign(resourceForm, {
         id: resourceDetail.id,
-        parentId: resourceDetail.parentId || 0,
-        parentName: resourceDetail.parentId === 0 ? '顶级资源' : resourceDetail.parentName || '',
+        parentId: 0,
+        parentName: '',
         name: resourceDetail.name,
         type: resourceDetail.type,
         code: resourceDetail.code,
-        orderNum: resourceDetail.orderNum,
+        orderNum: 1,
         state: resourceDetail.state,
         remark: resourceDetail.remark || '',
       })
@@ -393,10 +396,8 @@ const handleEdit = async (row: Resource) => {
 
 // 删除资源
 const handleDelete = async (row: Resource) => {
-  const fullPath = getResourceFullPath(row)
-
   try {
-    await ElMessageBox.confirm(`是否确认删除资源："${fullPath}"？`, '确认删除', {
+    await ElMessageBox.confirm(`是否确认删除资源：“${row.name}”？`, '确认删除', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning',
@@ -414,55 +415,6 @@ const handleDelete = async (row: Resource) => {
   } finally {
     loading.value = false
   }
-}
-
-// 获取资源全路径
-const getResourceFullPath = (resource: Resource) => {
-  const path = [resource.name]
-  let current = resource
-
-  // 向上查找父级资源
-  while (current.parentId) {
-    const parent = findResourceById(resourcesList.value, current.parentId)
-    if (parent) {
-      path.unshift(parent.name)
-      current = parent
-    } else {
-      break
-    }
-  }
-
-  return path.join(' / ')
-}
-
-// 获取树节点全路径（用于上级资源选择器）
-const getTreeNodeFullPath = (node: ResourceTreeNode): string => {
-  if (node.id === 0) {
-    return '顶级资源'
-  }
-  // 从资源列表中查找对应的完整资源信息
-  const resource = findResourceById(resourcesList.value, node.id)
-  // 如果 resource 存在/为真，执行这里的代码
-  if (resource) {
-    return getResourceFullPath(resource)
-  }
-
-  // 如果找不到，返回节点名称
-  return node.name
-}
-
-// 根据ID查找资源
-const findResourceById = (resources: Resource[], id: string | number): Resource | null => {
-  for (const resource of resources) {
-    if (resource.id === id) {
-      return resource
-    }
-    if (resource.children) {
-      const found = findResourceById(resource.children, id)
-      if (found) return found
-    }
-  }
-  return null
 }
 
 // 显示导入结果
@@ -550,22 +502,6 @@ const handleExport = async () => {
   }
 }
 
-// 选择上级资源
-const handleParentSelect = (data: ResourceTreeNode) => {
-  selectedParent.value = data
-}
-
-// 确认选择上级资源
-const confirmParentSelect = () => {
-  if (selectedParent.value) {
-    resourceForm.parentId = selectedParent.value.id
-    // 获取选中资源的全路径
-    const fullPath = getTreeNodeFullPath(selectedParent.value)
-    resourceForm.parentName = fullPath
-    showParentSelector.value = false
-  }
-}
-
 // 提交表单
 const handleSubmit = async () => {
   if (!resourceFormRef.value) return
@@ -576,11 +512,9 @@ const handleSubmit = async () => {
 
     if (dialogType.value === 'add') {
       const createData: CreateResourceRequest = {
-        parentId: Number(resourceForm.parentId),
         name: resourceForm.name,
         type: resourceForm.type,
         code: resourceForm.code,
-        orderNum: resourceForm.orderNum,
         state: resourceForm.state,
         remark: resourceForm.remark,
       }
@@ -589,11 +523,9 @@ const handleSubmit = async () => {
     } else {
       const updateData: UpdateResourceRequest = {
         id: Number(resourceForm.id),
-        parentId: Number(resourceForm.parentId),
         name: resourceForm.name,
         type: resourceForm.type,
         code: resourceForm.code,
-        orderNum: resourceForm.orderNum,
         state: resourceForm.state,
         remark: resourceForm.remark,
       }
@@ -616,7 +548,7 @@ const handleSubmit = async () => {
 const resetResourceForm = () => {
   Object.assign(resourceForm, {
     id: '',
-    parentId: '',
+    parentId: 0,
     parentName: '',
     code: '',
     name: '',
@@ -636,46 +568,12 @@ const getTypeTagType = (type: ResourceType) => {
       return 'success'
     case ResourceType.API:
       return 'warning'
+    case ResourceType.DIRECTORY:
+      return 'info'
     default:
       return 'info'
   }
 }
-
-// 获取类型标签文本
-const getTypeLabel = (type: ResourceType) => {
-  switch (type) {
-    case ResourceType.PAGE:
-      return '页面'
-    case ResourceType.BUTTON:
-      return '按钮'
-    case ResourceType.API:
-      return '接口'
-    default:
-      return '未知'
-  }
-}
-
-// 获取资源树的最大层级
-const getMaxLevel = (resources: Resource[], currentLevel = 0): number => {
-  if (!resources || resources.length === 0) return currentLevel
-
-  let maxLevel = currentLevel
-  for (const resource of resources) {
-    if (resource.children && resource.children.length > 0) {
-      const childLevel = getMaxLevel(resource.children, currentLevel + 1)
-      maxLevel = Math.max(maxLevel, childLevel)
-    }
-  }
-  return maxLevel
-}
-
-// 计算名称列宽度 - 根据最大层级自适应
-const nameColumnWidth = computed(() => {
-  const baseWidth = 150 // 基础宽度
-  const levelWidth = 24 // 每层缩进宽度
-  const maxLevel = getMaxLevel(resourcesList.value)
-  return baseWidth + maxLevel * levelWidth
-})
 </script>
 
 <style scoped>
@@ -713,14 +611,16 @@ const nameColumnWidth = computed(() => {
   margin-right: 8px;
 }
 
-.parent-selector {
-  max-height: 400px;
-  overflow-y: auto;
-}
-
 /* 确保对话框显示在最上层 */
 .el-dialog {
   z-index: 2999 !important;
+}
+
+/* 分页样式 */
+.pagination-wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
 }
 
 /* 导入结果弹窗样式 */

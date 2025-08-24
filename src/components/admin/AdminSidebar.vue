@@ -25,6 +25,10 @@
         <el-icon><Files /></el-icon>
         <span>资源管理</span>
       </el-menu-item>
+      <el-menu-item index="/admin/resource-relations">
+        <el-icon><Connection /></el-icon>
+        <span>资源关联管理</span>
+      </el-menu-item>
     </el-menu>
   </el-aside>
 </template>
@@ -38,6 +42,7 @@ import {
   DataBoard,
   ArrowRightBold,
   ArrowLeftBold,
+  Connection,
 } from '@element-plus/icons-vue'
 import { useRoute } from 'vue-router'
 

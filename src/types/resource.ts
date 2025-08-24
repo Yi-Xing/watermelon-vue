@@ -3,6 +3,7 @@ export enum ResourceType {
   PAGE = 1, // 页面
   BUTTON = 2, // 按钮
   API = 3, // 接口
+  DIRECTORY = 4, // 目录
 }
 
 // 资源状态枚举
@@ -13,8 +14,8 @@ export enum ResourceStatus {
 
 // 资源接口
 export interface Resource {
-  id: string | number
-  parentId?: string | number
+  id: number
+  parentId?: number
   parentName?: string
   name: string
   type: ResourceType
@@ -55,6 +56,8 @@ export interface ResourceSearchForm {
   name: string
   code: string
   state: number // 改为state与后端一致，0: 全部, 1: 启用, 2: 禁用
+  pageNum: number
+  pageSize: number
 }
 
 // 资源树节点接口
@@ -72,13 +75,22 @@ export interface ApiResponse<T = unknown> {
   data?: T
 }
 
+// 分页数据接口
+export interface PageData<T> {
+  dataList: T[]
+  total: number
+  current: number
+  size: number
+  pages: number
+  hasPrevious: boolean
+  hasNext: boolean
+}
+
 // 创建资源请求
 export interface CreateResourceRequest {
-  parentId: number
   name: string
   type: number
   code: string
-  orderNum: number
   state: number
   remark: string
 }
@@ -93,11 +105,9 @@ export interface CreateResourceResponse {
 // 更新资源请求
 export interface UpdateResourceRequest {
   id: number
-  parentId: number
   name: string
   type: number
   code: string
-  orderNum: number
   state: number
   remark: string
 }
