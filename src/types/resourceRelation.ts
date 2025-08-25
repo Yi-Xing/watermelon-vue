@@ -23,6 +23,7 @@ export interface ResourceRelationTreeNode {
   updatedTime: string
   children?: ResourceRelationTreeNode[]
   hasChildren?: boolean
+  uniqueId?: string
 }
 
 // 资源关联详情

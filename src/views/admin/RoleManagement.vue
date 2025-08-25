@@ -132,8 +132,9 @@
           :data="resourcesTree"
           :props="treeProps"
           show-checkbox
-          node-key="id"
+          node-key="uniqueId"
           default-expand-all
+          @check="handleNodeCheck"
         />
       </div>
       <template #footer>
@@ -211,37 +212,137 @@ const resourcesTreeRef = ref()
 const resourcesTree = ref<ResourceRelationTreeNode[]>([])
 const selectedResourceIds = ref<number[]>([])
 
+// ID映射关系
+const uniqueIdToIdMap = ref<Map<string, number>>(new Map())
+const idToUniqueIdsMap = ref<Map<number, Set<string>>>(new Map())
+// 记录所有叶子节点的uniqueId
+const leafNodeUniqueIds = ref<Set<string>>(new Set())
+
 // 树形配置
 const treeProps = {
   children: 'children',
   label: 'name',
 }
 
+// 生成唯一ID的函数
+const generateUniqueId = (node: ResourceRelationTreeNode, parentPath: string = ''): string => {
+  const currentPath = parentPath ? `${parentPath}/${node.id}` : `/${node.id}`
+  return currentPath
+}
+
+// 为资源树添加唯一ID并建立映射关系
+const processResourceTree = (nodes: ResourceRelationTreeNode[], parentPath: string = '') => {
+  // 清空之前的映射关系
+  uniqueIdToIdMap.value.clear()
+  idToUniqueIdsMap.value.clear()
+  leafNodeUniqueIds.value.clear()
+
+  const processNode = (node: ResourceRelationTreeNode, currentParentPath: string) => {
+    // 生成唯一ID
+    const uniqueId = generateUniqueId(node, currentParentPath)
+
+    // 建立唯一ID到原始ID的映射
+    uniqueIdToIdMap.value.set(uniqueId, node.id)
+
+    // 建立原始ID到唯一ID集合的映射
+    if (!idToUniqueIdsMap.value.has(node.id)) {
+      idToUniqueIdsMap.value.set(node.id, new Set())
+    }
+    idToUniqueIdsMap.value.get(node.id)!.add(uniqueId)
+
+    // 为节点添加uniqueId属性
+    node.uniqueId = uniqueId
+
+    // 递归处理子节点
+    if (node.children && node.children.length > 0) {
+      node.children.forEach(child => processNode(child, uniqueId))
+    } else {
+      // 这是叶子节点，记录其uniqueId
+      leafNodeUniqueIds.value.add(uniqueId)
+    }
+  }
+
+  nodes.forEach(node => processNode(node, parentPath))
+  console.log('叶子节点uniqueId:', leafNodeUniqueIds.value)
+  console.log('节点映射:', uniqueIdToIdMap.value)
+  console.log('ID映射:', idToUniqueIdsMap.value)
+  return nodes
+}
+
 // 设置树形组件的选中状态
 const setTreeCheckedKeys = () => {
   if (!resourcesTreeRef.value || !selectedResourceIds.value.length) return
 
-  // 收集所有需要选中的节点ID（包括重复ID）
-  const allCheckedKeys: number[] = []
+  // 收集所有需要选中的唯一ID
+  const allCheckedUniqueIds: string[] = []
+  console.log("selectedResourceIds:" + selectedResourceIds.value)
 
-  const collectAllMatchingKeys = (resourceList: ResourceRelationTreeNode[]) => {
-    resourceList.forEach((resource) => {
-      if (!resource.children || resource.children.length === 0) {
-        // 这是叶子节点，如果在权限列表中则添加到选中列表
-        if (selectedResourceIds.value.includes(Number(resource.id))) {
-          allCheckedKeys.push(Number(resource.id))
-        }
-      } else {
-        // 这是父节点，递归查找子节点
-        collectAllMatchingKeys(resource.children)
+  // 遍历选中的节点ID，找到对应的所有唯一ID
+  selectedResourceIds.value.forEach(resourceId => {
+    const uniqueIds = idToUniqueIdsMap.value.get(resourceId)
+    if (uniqueIds) {
+      uniqueIds.forEach(uniqueId => {
+        allCheckedUniqueIds.push(uniqueId)
+      })
+    }
+  })
+
+  console.log("allCheckedUniqueIds:" + allCheckedUniqueIds)
+  // 只处理叶子节点的ID，过滤掉非叶子节点
+  const leafSelectedUniqueIds = allCheckedUniqueIds.filter(id => leafNodeUniqueIds.value.has(id))
+  console.log("叶子节点选中的ID:" + leafSelectedUniqueIds)
+
+  // 使用setCheckedKeys一次性设置所有选中状态（使用唯一ID）
+  resourcesTreeRef.value.setCheckedKeys(leafSelectedUniqueIds)
+}
+
+// 处理节点选中事件
+const handleNodeCheck = (nodeData: ResourceRelationTreeNode, checkInfo: { checkedKeys: string[], halfCheckedKeys: string[] }) => {
+  // 当前被选中的所有节点唯一标识
+  const { checkedKeys } = checkInfo
+
+  console.log("checkedKeys:"+checkedKeys)
+
+  // 获取当前被操作的节点的唯一ID
+  const currentUniqueId = nodeData.uniqueId
+  console.log("currentUniqueId:"+currentUniqueId)
+  if (!currentUniqueId) return
+
+  // 通过唯一ID获取原始ID
+  const originalId = uniqueIdToIdMap.value.get(currentUniqueId)
+  if (!originalId) return
+
+  console.log("originalId:"+originalId)
+  // 获取所有具有相同原始ID的唯一ID
+  const sameOriginalIdUniqueIds = idToUniqueIdsMap.value.get(originalId)
+  if (!sameOriginalIdUniqueIds) return
+
+  console.log("sameOriginalIdUniqueIds:"+[...sameOriginalIdUniqueIds])
+  // 检查当前节点是否被选中
+  const isCurrentNodeChecked = checkedKeys.includes(currentUniqueId)
+
+  // 同步选中/取消选中所有具有相同原始ID的节点
+  let updatedCheckedKeys = [...checkedKeys]
+
+  if (isCurrentNodeChecked) {
+    // 如果当前节点被选中，则选中所有具有相同原始ID的节点
+    sameOriginalIdUniqueIds.forEach(uniqueId => {
+      if (!updatedCheckedKeys.includes(uniqueId)) {
+        updatedCheckedKeys.push(uniqueId)
       }
     })
-  }
 
-  // 收集所有匹配的节点ID
-  collectAllMatchingKeys(resourcesTree.value)
-  // 使用setCheckedKeys一次性设置所有选中状态
-  resourcesTreeRef.value.setCheckedKeys(allCheckedKeys)
+  } else {
+    // 取消时，需要进行过滤。只操作叶子节点
+    updatedCheckedKeys = updatedCheckedKeys.filter(id => leafNodeUniqueIds.value.has(id))
+    // 如果当前节点被取消选中，则取消选中所有具有该节点前缀的叶子
+    sameOriginalIdUniqueIds.forEach(uniqueId => {
+      updatedCheckedKeys = updatedCheckedKeys.filter(id => !id.startsWith(uniqueId))
+    })
+  }
+  console.log("updatedCheckedKeys:"+updatedCheckedKeys)
+  // 更新树的选中状态
+  resourcesTreeRef.value.setCheckedKeys(updatedCheckedKeys)
 }
 
 // 监听状态变化，自动触发搜索
@@ -294,7 +395,10 @@ const loadResources = async () => {
     }
 
     const response = await getResourceRelationTree(params)
-    resourcesTree.value = response.data || []
+    const rawData = response.data || []
+
+    // 处理资源树，添加唯一ID并建立映射关系
+    resourcesTree.value = processResourceTree(rawData)
   } catch (error) {
     console.error('获取资源树失败:', error)
     ElMessage.error('获取资源树失败')
@@ -454,10 +558,22 @@ const handleUpdateResourcesSubmit = async () => {
     const checkedKeys = resourcesTreeRef.value.getCheckedKeys()
     const halfCheckedKeys = resourcesTreeRef.value.getHalfCheckedKeys()
 
-    // 合并选中的和半选中的资源ID
-    const allResourceIds = [...checkedKeys, ...halfCheckedKeys]
+    // 合并选中的和半选中的唯一ID
+    const allUniqueIds = [...checkedKeys, ...halfCheckedKeys]
 
-    await updateRoleResources(currentRoleId.value, allResourceIds)
+    // 将唯一ID转换为原始ID
+    const originalIds: number[] = []
+    allUniqueIds.forEach(uniqueId => {
+      const originalId = uniqueIdToIdMap.value.get(uniqueId)
+      if (originalId !== undefined) {
+        originalIds.push(originalId)
+      }
+    })
+
+    // 去重原始ID
+    const uniqueOriginalIds = [...new Set(originalIds)]
+
+    await updateRoleResources(currentRoleId.value, uniqueOriginalIds)
     ElMessage.success('资源更新成功')
     resourcesDialogVisible.value = false
 
