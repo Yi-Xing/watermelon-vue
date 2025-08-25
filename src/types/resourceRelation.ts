@@ -73,12 +73,5 @@ export interface ResourceSelectorNode {
   children?: ResourceSelectorNode[]
 }
 
-// 导入结果
-export interface ImportResult {
-  totalRows: number
-  insertedRows: number
-  updatedRows: number
-  deletedRows: number
-  errors: string[] | null
-  success: boolean
-}
+// 导入结果类型从通用类型导入
+export type { ImportResult } from './common'

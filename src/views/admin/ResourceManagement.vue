@@ -159,46 +159,7 @@
     </el-dialog>
 
     <!-- 导入结果弹窗 -->
-    <el-dialog
-      v-model="importResultVisible"
-      title="导入结果"
-      width="800px"
-      :close-on-click-modal="false"
-      :close-on-press-escape="false"
-    >
-      <div class="import-result">
-        <h3>导入完成！</h3>
-        <div class="result-stats" v-if="importResult.success">
-          <div class="stat-item">
-            <span class="stat-label">总行数</span>
-            <span class="stat-value">{{ importResult.totalRows }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">新增行数</span>
-            <span class="stat-value success">{{ importResult.insertedRows }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">更新行数</span>
-            <span class="stat-value warning">{{ importResult.updatedRows }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">删除行数</span>
-            <span class="stat-value danger">{{ importResult.deletedRows }}</span>
-          </div>
-        </div>
-        <div v-if="!importResult.success" class="error-section">
-          <h4>错误信息</h4>
-          <div class="error-list">
-            <div v-for="(error, index) in importResult.errors" :key="index" class="error-item">
-              {{ error }}
-            </div>
-          </div>
-        </div>
-      </div>
-      <template #footer>
-        <el-button type="primary" @click="importResultVisible = false">确定</el-button>
-      </template>
-    </el-dialog>
+    <ImportResultDialog v-model="importResultVisible" :import-data="importResult" />
   </div>
 </template>
 
@@ -210,6 +171,8 @@ import type { Resource, ResourceForm, ResourceSearchForm } from '@/types/resourc
 import { ResourceType, ResourceStatus } from '@/types/resource'
 import * as resourceApi from '@/api/admin/resource'
 import type { CreateResourceRequest, UpdateResourceRequest } from '@/types/resource'
+import type { ImportResult } from '@/types/common'
+import ImportResultDialog from '@/components/common/ImportResultDialog.vue'
 
 // 搜索表单
 const searchForm = reactive<ResourceSearchForm>({
@@ -251,18 +214,11 @@ const resourceForm = reactive<ResourceForm>({
 
 // 导入结果弹窗
 const importResultVisible = ref(false)
-const importResult = ref<{
-  totalRows: number
-  insertedRows: number
-  updatedRows: number
-  deletedRows: number
-  errors: string[] | null
-  success: boolean
-}>({
-  totalRows: 0,
-  insertedRows: 0,
-  updatedRows: 0,
-  deletedRows: 0,
+const importResult = ref<ImportResult>({
+  totalCount: 0,
+  insertCount: 0,
+  updateCount: 0,
+  deleteCount: 0,
   errors: null,
   success: false,
 })
@@ -418,14 +374,7 @@ const handleDelete = async (row: Resource) => {
 }
 
 // 显示导入结果
-const showImportResult = (data: {
-  totalRows: number
-  insertedRows: number
-  updatedRows: number
-  deletedRows: number
-  errors: string[] | null
-  success: boolean
-}) => {
+const showImportResult = (data: ImportResult) => {
   // 更新导入结果数据
   importResult.value = { ...data }
   // 显示弹窗

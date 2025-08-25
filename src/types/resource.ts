@@ -60,24 +60,8 @@ export interface ResourceSearchForm {
   pageSize: number
 }
 
-// API响应类型
-export interface ApiResponse<T = unknown> {
-  code: number
-  success: boolean
-  message: string
-  data?: T
-}
-
-// 分页数据接口
-export interface PageData<T> {
-  dataList: T[]
-  total: number
-  current: number
-  size: number
-  pages: number
-  hasPrevious: boolean
-  hasNext: boolean
-}
+// 从通用类型导入
+export type { ApiResponse, PageData } from './common'
 
 // 创建资源请求
 export interface CreateResourceRequest {
