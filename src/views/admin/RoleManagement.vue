@@ -263,9 +263,6 @@ const processResourceTree = (nodes: ResourceRelationTreeNode[], parentPath: stri
   }
 
   nodes.forEach(node => processNode(node, parentPath))
-  console.log('叶子节点uniqueId:', leafNodeUniqueIds.value)
-  console.log('节点映射:', uniqueIdToIdMap.value)
-  console.log('ID映射:', idToUniqueIdsMap.value)
   return nodes
 }
 
@@ -275,7 +272,6 @@ const setTreeCheckedKeys = () => {
 
   // 收集所有需要选中的唯一ID
   const allCheckedUniqueIds: string[] = []
-  console.log("selectedResourceIds:" + selectedResourceIds.value)
 
   // 遍历选中的节点ID，找到对应的所有唯一ID
   selectedResourceIds.value.forEach(resourceId => {
@@ -287,10 +283,8 @@ const setTreeCheckedKeys = () => {
     }
   })
 
-  console.log("allCheckedUniqueIds:" + allCheckedUniqueIds)
   // 只处理叶子节点的ID，过滤掉非叶子节点
   const leafSelectedUniqueIds = allCheckedUniqueIds.filter(id => leafNodeUniqueIds.value.has(id))
-  console.log("叶子节点选中的ID:" + leafSelectedUniqueIds)
 
   // 使用setCheckedKeys一次性设置所有选中状态（使用唯一ID）
   resourcesTreeRef.value.setCheckedKeys(leafSelectedUniqueIds)
@@ -301,23 +295,18 @@ const handleNodeCheck = (nodeData: ResourceRelationTreeNode, checkInfo: { checke
   // 当前被选中的所有节点唯一标识
   const { checkedKeys } = checkInfo
 
-  console.log("checkedKeys:"+checkedKeys)
-
   // 获取当前被操作的节点的唯一ID
   const currentUniqueId = nodeData.uniqueId
-  console.log("currentUniqueId:"+currentUniqueId)
   if (!currentUniqueId) return
 
   // 通过唯一ID获取原始ID
   const originalId = uniqueIdToIdMap.value.get(currentUniqueId)
   if (!originalId) return
 
-  console.log("originalId:"+originalId)
   // 获取所有具有相同原始ID的唯一ID
   const sameOriginalIdUniqueIds = idToUniqueIdsMap.value.get(originalId)
   if (!sameOriginalIdUniqueIds) return
 
-  console.log("sameOriginalIdUniqueIds:"+[...sameOriginalIdUniqueIds])
   // 检查当前节点是否被选中
   const isCurrentNodeChecked = checkedKeys.includes(currentUniqueId)
 
@@ -340,7 +329,6 @@ const handleNodeCheck = (nodeData: ResourceRelationTreeNode, checkInfo: { checke
       updatedCheckedKeys = updatedCheckedKeys.filter(id => !id.startsWith(uniqueId))
     })
   }
-  console.log("updatedCheckedKeys:"+updatedCheckedKeys)
   // 更新树的选中状态
   resourcesTreeRef.value.setCheckedKeys(updatedCheckedKeys)
 }
