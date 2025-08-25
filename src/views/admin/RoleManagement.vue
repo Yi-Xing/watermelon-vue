@@ -224,45 +224,39 @@ const treeProps = {
   label: 'name',
 }
 
-// 生成唯一ID的函数
-const generateUniqueId = (node: ResourceRelationTreeNode, parentPath: string = ''): string => {
-  const currentPath = parentPath ? `${parentPath}/${node.id}` : `/${node.id}`
-  return currentPath
-}
-
 // 为资源树添加唯一ID并建立映射关系
-const processResourceTree = (nodes: ResourceRelationTreeNode[], parentPath: string = '') => {
+const processResourceTree = (nodes: ResourceRelationTreeNode[]) => {
   // 清空之前的映射关系
   uniqueIdToIdMap.value.clear()
   idToUniqueIdsMap.value.clear()
   leafNodeUniqueIds.value.clear()
 
-  const processNode = (node: ResourceRelationTreeNode, currentParentPath: string) => {
+  const processNode = (node: ResourceRelationTreeNode) => {
     // 生成唯一ID
-    const uniqueId = generateUniqueId(node, currentParentPath)
+    const uniqueId = node.resourcePath
 
     // 建立唯一ID到原始ID的映射
-    uniqueIdToIdMap.value.set(uniqueId, node.id)
+    uniqueIdToIdMap.value.set(uniqueId, node.resourceId)
 
     // 建立原始ID到唯一ID集合的映射
-    if (!idToUniqueIdsMap.value.has(node.id)) {
-      idToUniqueIdsMap.value.set(node.id, new Set())
+    if (!idToUniqueIdsMap.value.has(node.resourceId)) {
+      idToUniqueIdsMap.value.set(node.resourceId, new Set())
     }
-    idToUniqueIdsMap.value.get(node.id)!.add(uniqueId)
+    idToUniqueIdsMap.value.get(node.resourceId)!.add(uniqueId)
 
     // 为节点添加uniqueId属性
     node.uniqueId = uniqueId
 
     // 递归处理子节点
     if (node.children && node.children.length > 0) {
-      node.children.forEach(child => processNode(child, uniqueId))
+      node.children.forEach(child => processNode(child))
     } else {
       // 这是叶子节点，记录其uniqueId
       leafNodeUniqueIds.value.add(uniqueId)
     }
   }
 
-  nodes.forEach(node => processNode(node, parentPath))
+  nodes.forEach(node => processNode(node))
   return nodes
 }
 

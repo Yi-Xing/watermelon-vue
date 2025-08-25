@@ -60,13 +60,6 @@ export interface ResourceSearchForm {
   pageSize: number
 }
 
-// 资源树节点接口
-export interface ResourceTreeNode {
-  id: string | number
-  name: string
-  children?: ResourceTreeNode[]
-}
-
 // API响应类型
 export interface ApiResponse<T = unknown> {
   code: number

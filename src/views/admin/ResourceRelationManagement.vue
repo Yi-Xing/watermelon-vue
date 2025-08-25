@@ -70,7 +70,7 @@
         :data="resourceRelationsList"
         v-loading="loading"
         stripe
-        row-key="id"
+        row-key="resourcePath"
         :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
         default-expand-all
       >
@@ -382,6 +382,7 @@ const loadResourceRelations = async () => {
     })
     if (response.success && response.data) {
       resourceRelationsList.value = response.data
+      console.log('resourceRelationsList', resourceRelationsList.value)
     } else {
       throw new Error(response.message || '获取资源关联列表失败')
     }
@@ -482,7 +483,7 @@ const handleEdit = async (row: ResourceRelationTreeNode) => {
     loading.value = true
 
     // 调用API获取资源关联详情
-    const response = await resourceRelationApi.getResourceRelationDetail(row.resourceRelationId)
+    const response = await resourceRelationApi.getResourceRelationDetail(row.id)
     if (response.success && response.data) {
       const relationDetail = response.data
 
@@ -518,7 +519,7 @@ const handleDelete = async (row: ResourceRelationTreeNode) => {
     })
 
     loading.value = true
-    await resourceRelationApi.deleteResourceRelation(row.resourceRelationId)
+    await resourceRelationApi.deleteResourceRelation(row.id)
     ElMessage.success(`资源关联"${row.name}"删除成功`)
     loadResourceRelations()
   } catch (error) {
@@ -611,8 +612,8 @@ const handleParentSelect = (data: ResourceRelationTreeNode) => {
 // 确认选择父级资源
 const confirmParentSelect = () => {
   if (selectedParent.value) {
-    relationForm.parentId = selectedParent.value.id
-    relationForm.parentName = selectedParent.value.id === 0 ? '顶级资源' : selectedParent.value.name
+    relationForm.parentId = selectedParent.value.resourceId
+    relationForm.parentName = selectedParent.value.resourceId === 0 ? '顶级资源' : selectedParent.value.name
     showParentSelector.value = false
   }
 }

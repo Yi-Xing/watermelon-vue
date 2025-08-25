@@ -10,7 +10,8 @@ export interface ResourceRelationSearchForm {
 // 资源关联树节点
 export interface ResourceRelationTreeNode {
   id: number
-  resourceRelationId: number
+  resourceId: number
+  resourcePath: string
   name: string
   type: number
   typeDesc: string
