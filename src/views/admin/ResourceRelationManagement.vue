@@ -157,6 +157,7 @@
           node-key="id"
           highlight-current
           @node-click="handleParentSelect"
+          default-expand-all
         />
       </div>
       <template #footer>

@@ -133,7 +133,7 @@
           :props="treeProps"
           show-checkbox
           node-key="id"
-          :default-expanded-keys="expandedKeys"
+          default-expand-all
         />
       </div>
       <template #footer>
@@ -210,7 +210,6 @@ const roleRules = {
 const resourcesTreeRef = ref()
 const resourcesTree = ref<ResourceRelationTreeNode[]>([])
 const selectedResourceIds = ref<number[]>([])
-const expandedKeys = ref<number[]>([])
 
 // 树形配置
 const treeProps = {
@@ -241,7 +240,6 @@ const setTreeCheckedKeys = () => {
 
   // 收集所有匹配的节点ID
   collectAllMatchingKeys(resourcesTree.value)
-  console.log('allCheckedKeys', allCheckedKeys)
   // 使用setCheckedKeys一次性设置所有选中状态
   resourcesTreeRef.value.setCheckedKeys(allCheckedKeys)
 }
@@ -297,20 +295,6 @@ const loadResources = async () => {
 
     const response = await getResourceRelationTree(params)
     resourcesTree.value = response.data || []
-
-    // 设置默认展开的节点（展开所有父节点）
-    const extractParentIds = (resources: ResourceRelationTreeNode[]): number[] => {
-      const ids: number[] = []
-      resources.forEach((resource) => {
-        if (resource.children && resource.children.length > 0) {
-          ids.push(Number(resource.id))
-          ids.push(...extractParentIds(resource.children))
-        }
-      })
-      return ids
-    }
-
-    expandedKeys.value = extractParentIds(resourcesTree.value)
   } catch (error) {
     console.error('获取资源树失败:', error)
     ElMessage.error('获取资源树失败')
@@ -400,9 +384,6 @@ const handleUpdateResources = async (row: Role) => {
     // 设置当前角色ID
     currentRoleId.value = row.id
     loading.value = true
-
-    // 重新加载最新的资源树数据
-    await loadResources()
 
     // 调用API获取角色详情，包含资源ID列表
     const response = await getRoleDetail(row.id)
