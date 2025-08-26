@@ -82,8 +82,8 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="code" label="资源Code" width="300" />
-        <el-table-column prop="orderNum" label="显示顺序" width="100" />
+        <el-table-column prop="code" label="资源Code" width="350" />
+        <el-table-column prop="orderNum" label="显示顺序" width="90" />
         <el-table-column prop="state" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.state === 1 ? 'success' : 'danger'">
@@ -91,7 +91,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column label="操作" width="200">
+        <el-table-column label="操作" width="150">
           <template #default="{ row }">
             <div class="action-buttons">
               <el-button type="primary" size="small" @click="handleEdit(row)"> 编辑 </el-button>

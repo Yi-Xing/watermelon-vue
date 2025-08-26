@@ -67,8 +67,8 @@
     <!-- 资源列表 -->
     <el-card class="resources-table-card">
       <el-table :data="resourcesList" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="名称" width="200" />
+        <el-table-column prop="id" label="ID" width="60" />
+        <el-table-column prop="name" label="名称" width="180" />
         <el-table-column prop="type" label="类型" width="100">
           <template #default="{ row }">
             <el-tag :type="getTypeTagType(row.type)">
@@ -76,7 +76,7 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="code" label="资源Code" width="300" />
+        <el-table-column prop="code" label="资源Code" width="350" />
         <el-table-column prop="state" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.state === ResourceStatus.ENABLED ? 'success' : 'danger'">
@@ -85,7 +85,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="remark" label="备注" min-width="150" show-overflow-tooltip />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="150" fixed="right">
           <template #default="{ row }">
             <div class="action-buttons">
               <el-button type="primary" size="small" @click="handleEdit(row)"> 编辑 </el-button>

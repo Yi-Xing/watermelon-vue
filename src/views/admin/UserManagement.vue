@@ -43,8 +43,8 @@
     <!-- 用户列表 -->
     <el-card class="users-table-card">
       <el-table :data="usersList" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="名称" width="120" />
+        <el-table-column prop="id" label="ID" width="60" />
+        <el-table-column prop="name" label="名称" width="150" />
         <el-table-column prop="email" label="邮箱" width="200" />
         <el-table-column prop="phone" label="手机号" width="130" />
         <el-table-column prop="state" label="状态" width="100">

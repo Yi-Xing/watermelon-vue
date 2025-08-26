@@ -42,9 +42,9 @@
     <!-- 角色列表 -->
     <el-card class="roles-table-card">
       <el-table :data="rolesList" v-loading="loading" stripe>
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="name" label="名称" width="150" />
-        <el-table-column prop="orderNum" label="显示顺序" width="100" />
+        <el-table-column prop="id" label="ID" width="60" />
+        <el-table-column prop="name" label="名称" width="130" />
+        <el-table-column prop="orderNum" label="显示顺序" width="90" />
         <el-table-column prop="state" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.state === 1 ? 'success' : 'danger'">
@@ -55,8 +55,6 @@
         <el-table-column prop="remark" label="备注" min-width="130" show-overflow-tooltip>
           <template #default="{ row }">
             <span
-              class="remark-text"
-              :class="{ 'remark-long': row.remark && row.remark.length > 20 }"
               :title="row.remark"
             >
               {{ row.remark || '无' }}
@@ -639,22 +637,6 @@ const handleCurrentChange = (page: number) => {
 .action-buttons {
   display: flex;
   gap: 8px;
-}
-
-/* 备注字段样式 */
-.remark-text {
-  display: inline-block;
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.remark-long {
-  max-width: 120px; /* 当备注较长时，缩短显示宽度 */
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .pagination-wrapper {
