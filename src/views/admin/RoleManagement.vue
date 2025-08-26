@@ -340,7 +340,6 @@ watch(
 // 初始化数据
 onMounted(() => {
   loadRoles()
-  loadResources()
 })
 
 // 加载角色列表
@@ -470,6 +469,9 @@ const handleUpdateResources = async (row: Role) => {
     // 设置当前角色ID
     currentRoleId.value = row.id
     loading.value = true
+
+    // 重新加载最新的资源树数据
+    await loadResources()
 
     // 调用API获取角色详情，包含资源ID列表
     const response = await getRoleDetail(row.id)
