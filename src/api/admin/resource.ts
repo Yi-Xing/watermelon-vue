@@ -10,6 +10,7 @@ import type {
   ApiResponse,
   PageData,
   ResourceSearchForm,
+  ImportResult,
 } from '@/types/resource'
 
 // 获取资源列表（分页）
@@ -137,14 +138,7 @@ export async function importResources(file: File): Promise<{
   code: number
   success: boolean
   message: string
-  data: {
-    totalRows: number
-    insertedRows: number
-    updatedRows: number
-    deletedRows: number
-    errors: string[] | null
-    success: boolean
-  }
+  data: ImportResult
 }> {
   const { getAuthToken } = useApi()
   const token = getAuthToken()

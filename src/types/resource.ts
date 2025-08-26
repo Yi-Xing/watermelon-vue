@@ -102,3 +102,4 @@ export interface DeleteResourceResponse {
   success: boolean
   message: string
 }
+export type { ImportResult } from './common'
