@@ -18,6 +18,25 @@ function handleUnauthorized() {
   }
 }
 
+// 处理HTTP错误响应
+async function handleHttpError(response: Response): Promise<never> {
+  // 处理401未授权错误
+  if (response.status === 401) {
+    handleUnauthorized()
+    throw new Error('登录已失效')
+  }
+  if (response.status === 403) {
+    console.log('无权限操作')
+    throw new Error('无权限操作')
+  }
+  if (response.status === 500) {
+    throw new Error('服务器异常，请稍后重试')
+  }
+  const text = await safeReadText(response)
+  // 其他错误状态码
+  throw new Error(`请求失败: ${response.status} ${text}`)
+}
+
 export function useHttp() {
   const httpGet = async <T>(pathOrUrl: string, token?: string): Promise<T> => {
     const headers: Record<string, string> = {
@@ -37,14 +56,8 @@ export function useHttp() {
     })
 
     if (!response.ok) {
-      // 处理401未授权错误
-      if (response.status === 401) {
-        handleUnauthorized()
-        throw new Error('登录已失效')
-      }
-
-      const text = await safeReadText(response)
-      throw new Error(`请求失败: ${response.status} ${text}`)
+      // 使用统一的错误处理函数
+      await handleHttpError(response)
     }
 
     return (await response.json()) as T
@@ -69,14 +82,8 @@ export function useHttp() {
     })
 
     if (!response.ok) {
-      // 处理401未授权错误
-      if (response.status === 401) {
-        handleUnauthorized()
-        throw new Error('登录已失效')
-      }
-
-      const text = await safeReadText(response)
-      throw new Error(`请求失败: ${response.status} ${text}`)
+      // 使用统一的错误处理函数
+      await handleHttpError(response)
     }
 
     return (await response.json()) as T
@@ -101,14 +108,8 @@ export function useHttp() {
     })
 
     if (!response.ok) {
-      // 处理401未授权错误
-      if (response.status === 401) {
-        handleUnauthorized()
-        throw new Error('登录已失效')
-      }
-
-      const text = await safeReadText(response)
-      throw new Error(`请求失败: ${response.status} ${text}`)
+      // 使用统一的错误处理函数
+      await handleHttpError(response)
     }
 
     return (await response.json()) as T
@@ -132,14 +133,8 @@ export function useHttp() {
     })
 
     if (!response.ok) {
-      // 处理401未授权错误
-      if (response.status === 401) {
-        handleUnauthorized()
-        throw new Error('登录已失效')
-      }
-
-      const text = await safeReadText(response)
-      throw new Error(`请求失败: ${response.status} ${text}`)
+      // 使用统一的错误处理函数
+      await handleHttpError(response)
     }
 
     return (await response.json()) as T

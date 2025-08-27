@@ -331,7 +331,6 @@ const relationFormRules = {
 onMounted(() => {
   loadResourceRelations()
   loadParentResources()
-  loadChildResources()
 })
 
 // 加载资源关联列表
@@ -370,6 +369,7 @@ const loadParentResources = async () => {
     }
   } catch (error) {
     console.error('加载父级资源树失败:', error)
+    ElMessage.error(error instanceof Error ? error.message : '加载父级资源树失败')
   }
 }
 
@@ -389,6 +389,7 @@ const loadChildResources = async (pageNum = 1, searchName = '', searchCode = '')
     }
   } catch (error) {
     console.error('加载子级资源列表失败:', error)
+    ElMessage.error(error instanceof Error ? error.message : '加载子级资源列表失败')
   }
 }
 
@@ -436,6 +437,8 @@ const handleReset = () => {
 const handleAdd = () => {
   dialogType.value = 'add'
   resetRelationForm()
+  // 加载子级资源列表
+  loadChildResources()
   dialogVisible.value = true
 }
 
@@ -460,6 +463,8 @@ const handleEdit = async (row: ResourceRelationTreeNode) => {
         orderNum: relationDetail.orderNum,
       })
 
+      // 加载子级资源列表
+      loadChildResources()
       dialogVisible.value = true
     } else {
       throw new Error(response.message || '获取资源关联详情失败')

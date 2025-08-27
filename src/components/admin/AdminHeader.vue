@@ -100,7 +100,9 @@ const loadCurrentUser = async () => {
     Object.assign(currentUser, userData)
   } catch (error) {
     console.error('获取用户信息失败:', error)
-    ElMessage.error('获取用户信息失败')
+    // 跳转到登录页面
+    router.push('/login')
+    ElMessage.error(error instanceof Error ? error.message : '获取用户信息失败')
   }
 }
 

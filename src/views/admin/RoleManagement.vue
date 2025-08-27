@@ -54,9 +54,7 @@
         </el-table-column>
         <el-table-column prop="remark" label="备注" min-width="130" show-overflow-tooltip>
           <template #default="{ row }">
-            <span
-              :title="row.remark"
-            >
+            <span :title="row.remark">
               {{ row.remark || '无' }}
             </span>
           </template>
@@ -138,7 +136,12 @@
       <template #footer>
         <span class="dialog-footer">
           <el-button @click="resourcesDialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleUpdateResourcesSubmit">确定</el-button>
+          <el-button
+            type="primary"
+            :loading="resourcesUpdateLoading"
+            @click="handleUpdateResourcesSubmit"
+            >确定</el-button
+          >
         </span>
       </template>
     </el-dialog>
@@ -183,6 +186,9 @@ const roleDialogVisible = ref(false)
 const resourcesDialogVisible = ref(false)
 const dialogType = ref<'add' | 'edit'>('add')
 const currentRoleId = ref<number | null>(null)
+
+// 资源更新loading状态
+const resourcesUpdateLoading = ref(false)
 
 // 角色表单
 const roleFormRef = ref()
@@ -247,14 +253,14 @@ const processResourceTree = (nodes: ResourceRelationTreeNode[]) => {
 
     // 递归处理子节点
     if (node.children && node.children.length > 0) {
-      node.children.forEach(child => processNode(child))
+      node.children.forEach((child) => processNode(child))
     } else {
       // 这是叶子节点，记录其uniqueId
       leafNodeUniqueIds.value.add(uniqueId)
     }
   }
 
-  nodes.forEach(node => processNode(node))
+  nodes.forEach((node) => processNode(node))
   return nodes
 }
 
@@ -266,24 +272,27 @@ const setTreeCheckedKeys = () => {
   const allCheckedUniqueIds: string[] = []
 
   // 遍历选中的节点ID，找到对应的所有唯一ID
-  selectedResourceIds.value.forEach(resourceId => {
+  selectedResourceIds.value.forEach((resourceId) => {
     const uniqueIds = idToUniqueIdsMap.value.get(resourceId)
     if (uniqueIds) {
-      uniqueIds.forEach(uniqueId => {
+      uniqueIds.forEach((uniqueId) => {
         allCheckedUniqueIds.push(uniqueId)
       })
     }
   })
 
   // 只处理叶子节点的ID，过滤掉非叶子节点
-  const leafSelectedUniqueIds = allCheckedUniqueIds.filter(id => leafNodeUniqueIds.value.has(id))
+  const leafSelectedUniqueIds = allCheckedUniqueIds.filter((id) => leafNodeUniqueIds.value.has(id))
 
   // 使用setCheckedKeys一次性设置所有选中状态（使用唯一ID）
   resourcesTreeRef.value.setCheckedKeys(leafSelectedUniqueIds)
 }
 
 // 处理节点选中事件
-const handleNodeCheck = (nodeData: ResourceRelationTreeNode, checkInfo: { checkedKeys: string[], halfCheckedKeys: string[] }) => {
+const handleNodeCheck = (
+  nodeData: ResourceRelationTreeNode,
+  checkInfo: { checkedKeys: string[]; halfCheckedKeys: string[] },
+) => {
   // 当前被选中的所有节点唯一标识
   const { checkedKeys } = checkInfo
 
@@ -307,18 +316,17 @@ const handleNodeCheck = (nodeData: ResourceRelationTreeNode, checkInfo: { checke
 
   if (isCurrentNodeChecked) {
     // 如果当前节点被选中，则选中所有具有相同原始ID的节点
-    sameOriginalIdUniqueIds.forEach(uniqueId => {
+    sameOriginalIdUniqueIds.forEach((uniqueId) => {
       if (!updatedCheckedKeys.includes(uniqueId)) {
         updatedCheckedKeys.push(uniqueId)
       }
     })
-
   } else {
     // 取消时，需要进行过滤。只操作叶子节点
-    updatedCheckedKeys = updatedCheckedKeys.filter(id => leafNodeUniqueIds.value.has(id))
+    updatedCheckedKeys = updatedCheckedKeys.filter((id) => leafNodeUniqueIds.value.has(id))
     // 如果当前节点被取消选中，则取消选中所有具有该节点前缀的叶子
-    sameOriginalIdUniqueIds.forEach(uniqueId => {
-      updatedCheckedKeys = updatedCheckedKeys.filter(id => !id.startsWith(uniqueId))
+    sameOriginalIdUniqueIds.forEach((uniqueId) => {
+      updatedCheckedKeys = updatedCheckedKeys.filter((id) => !id.startsWith(uniqueId))
     })
   }
   // 更新树的选中状态
@@ -358,7 +366,7 @@ const loadRoles = async () => {
     pagination.pageSize = response.data.size
   } catch (error) {
     console.error('获取角色列表失败:', error)
-    ElMessage.error('获取角色列表失败')
+    ElMessage.error(error instanceof Error ? error.message : '获取角色列表失败')
   } finally {
     loading.value = false
   }
@@ -380,7 +388,7 @@ const loadResources = async () => {
     resourcesTree.value = processResourceTree(rawData)
   } catch (error) {
     console.error('获取资源树失败:', error)
-    ElMessage.error('获取资源树失败')
+    ElMessage.error(error instanceof Error ? error.message : '获取资源树失败')
   }
 }
 
@@ -428,7 +436,7 @@ const handleEdit = async (row: Role) => {
     roleDialogVisible.value = true
   } catch (error) {
     console.error('获取角色详情失败:', error)
-    ElMessage.error('获取角色详情失败')
+    ElMessage.error(error instanceof Error ? error.message : '获取角色详情失败')
   } finally {
     loading.value = false
   }
@@ -449,7 +457,7 @@ const handleDelete = async (row: Role) => {
   } catch (error) {
     if (error !== 'cancel') {
       console.error('删除角色失败:', error)
-      ElMessage.error('删除角色失败')
+      ElMessage.error(error instanceof Error ? error.message : '删除角色失败')
     }
   }
 }
@@ -485,7 +493,7 @@ const handleUpdateResources = async (row: Role) => {
     setTreeCheckedKeys()
   } catch (error) {
     console.error('获取角色资源失败:', error)
-    ElMessage.error('获取角色资源失败')
+    ElMessage.error(error instanceof Error ? error.message : '获取角色资源失败')
   } finally {
     loading.value = false
   }
@@ -537,6 +545,8 @@ const handleUpdateResourcesSubmit = async () => {
   if (!currentRoleId.value) return
 
   try {
+    resourcesUpdateLoading.value = true
+
     const checkedKeys = resourcesTreeRef.value.getCheckedKeys()
     const halfCheckedKeys = resourcesTreeRef.value.getHalfCheckedKeys()
 
@@ -545,7 +555,7 @@ const handleUpdateResourcesSubmit = async () => {
 
     // 将唯一ID转换为原始ID
     const originalIds: number[] = []
-    allUniqueIds.forEach(uniqueId => {
+    allUniqueIds.forEach((uniqueId) => {
       const originalId = uniqueIdToIdMap.value.get(uniqueId)
       if (originalId !== undefined) {
         originalIds.push(originalId)
@@ -564,6 +574,8 @@ const handleUpdateResourcesSubmit = async () => {
   } catch (error) {
     console.error('更新角色资源失败:', error)
     ElMessage.error(error instanceof Error ? error.message : '更新角色资源失败')
+  } finally {
+    resourcesUpdateLoading.value = false
   }
 }
 

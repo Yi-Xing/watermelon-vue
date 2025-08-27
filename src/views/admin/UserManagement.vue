@@ -306,7 +306,7 @@ const loadRoles = async () => {
     roleOptions.value = response.data.dataList
   } catch (error) {
     console.error('获取角色列表失败:', error)
-    ElMessage.error('获取角色列表失败')
+    ElMessage.error(error instanceof Error ? error.message : '获取角色列表失败')
   }
 }
 
@@ -333,7 +333,7 @@ const loadUsers = async () => {
     pagination.pageSize = response.data.size
   } catch (error) {
     console.error('获取用户列表失败:', error)
-    ElMessage.error('获取用户列表失败')
+    ElMessage.error(error instanceof Error ? error.message : '获取用户列表失败')
   } finally {
     loading.value = false
   }
@@ -393,7 +393,7 @@ const handleEdit = async (row: UserListItem) => {
     dialogVisible.value = true
   } catch (error) {
     console.error('获取用户详情失败:', error)
-    ElMessage.error('获取用户详情失败')
+    ElMessage.error(error instanceof Error ? error.message : '获取用户详情失败')
   } finally {
     loading.value = false
   }
@@ -412,10 +412,8 @@ const handleDelete = async (row: UserListItem) => {
     ElMessage.success('删除成功')
     loadUsers()
   } catch (error) {
-    if (error !== 'cancel') {
-      console.error('删除用户失败:', error)
-      ElMessage.error('删除用户失败')
-    }
+    console.error('删除用户失败:', error)
+    ElMessage.error(error instanceof Error ? error.message : '删除用户失败')
   }
 }
 
