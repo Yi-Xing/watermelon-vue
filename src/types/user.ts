@@ -8,6 +8,8 @@ export interface CurrentUser {
   createdTime: string
   updatedTime: string
   expireTime: string
+  pageCodeList: string[]
+  buttonCodeList: string[]
 }
 
 // 创建用户请求参数

@@ -73,8 +73,10 @@ import { useRouter } from 'vue-router'
 import { getCurrentUser, logout } from '@/api/auth'
 import type { CurrentUser } from '@/types/user'
 import DefaultAvatar from '@/assets/DefaultAvatar.png'
+import { useUserAuthStore } from '@/stores/userAuth'
 
 const router = useRouter()
+const userAuthStore = useUserAuthStore()
 
 // 头像图片路径
 const avatarSrc = DefaultAvatar
@@ -89,6 +91,8 @@ const currentUser = reactive<CurrentUser>({
   createdTime: '',
   updatedTime: '',
   expireTime: '',
+  pageCodeList: [],
+  buttonCodeList: [],
 })
 
 const profileDialogVisible = ref(false)
@@ -98,6 +102,9 @@ const loadCurrentUser = async () => {
   try {
     const userData = await getCurrentUser()
     Object.assign(currentUser, userData)
+
+    // 将用户权限信息存储到store中
+    userAuthStore.setUserAuth(userData.pageCodeList, userData.buttonCodeList)
   } catch (error) {
     console.error('获取用户信息失败:', error)
     // 跳转到登录页面
