@@ -4,15 +4,26 @@
     <div class="page-header">
       <h2>资源关联管理</h2>
       <div class="header-actions">
-        <el-button type="primary" @click="handleAdd">
+        <el-button
+          v-permission="BUTTON_PERMISSIONS.ADMIN_RESOURCE_RELATION_ADD_BUTTON"
+          type="primary"
+          @click="handleAdd"
+        >
           <el-icon><Plus /></el-icon>
           新增关联
         </el-button>
-        <el-button @click="handleImport">
+        <el-button
+          v-permission="BUTTON_PERMISSIONS.ADMIN_RESOURCE_RELATION_EXCEL_IMPORT_BUTTON"
+          @click="handleImport"
+        >
           <el-icon><Upload /></el-icon>
           导入
         </el-button>
-        <el-button @click="handleExport" :loading="exporting">
+        <el-button
+          v-permission="BUTTON_PERMISSIONS.ADMIN_RESOURCE_RELATION_EXCEL_EXPORT_BUTTON"
+          @click="handleExport"
+          :loading="exporting"
+        >
           <el-icon><Download /></el-icon>
           {{ exporting ? '导出中...' : '导出' }}
         </el-button>
@@ -94,8 +105,22 @@
         <el-table-column label="操作" width="150">
           <template #default="{ row }">
             <div class="action-buttons">
-              <el-button type="primary" size="small" @click="handleEdit(row)"> 编辑 </el-button>
-              <el-button type="danger" size="small" @click="handleDelete(row)"> 删除 </el-button>
+              <el-button
+                v-permission="BUTTON_PERMISSIONS.ADMIN_RESOURCE_RELATION_UPDATE_BUTTON"
+                type="primary"
+                size="small"
+                @click="handleEdit(row)"
+              >
+                编辑
+              </el-button>
+              <el-button
+                v-permission="BUTTON_PERMISSIONS.ADMIN_RESOURCE_RELATION_DELETE_BUTTON"
+                type="danger"
+                size="small"
+                @click="handleDelete(row)"
+              >
+                删除
+              </el-button>
             </div>
           </template>
         </el-table-column>
@@ -254,6 +279,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Upload, Download } from '@element-plus/icons-vue'
+import { BUTTON_PERMISSIONS } from '@/constants/permissionCode'
 import type {
   ResourceRelationTreeNode,
   ResourceRelationForm,

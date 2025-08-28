@@ -3,7 +3,11 @@
     <!-- 页面标题 -->
     <div class="page-header">
       <h2>角色管理</h2>
-      <el-button type="primary" @click="handleAdd">
+      <el-button
+        v-permission="BUTTON_PERMISSIONS.ADMIN_ROLE_ADD_BUTTON"
+        type="primary"
+        @click="handleAdd"
+      >
         <el-icon><Plus /></el-icon>
         新增角色
       </el-button>
@@ -63,11 +67,30 @@
         <el-table-column prop="updatedTime" label="更新时间" width="180" />
         <el-table-column label="操作" width="200">
           <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handleEdit(row)"> 编辑 </el-button>
-            <el-button type="success" size="small" @click="handleUpdateResources(row)">
+            <el-button
+              v-permission="BUTTON_PERMISSIONS.ADMIN_ROLE_UPDATE_BUTTON"
+              type="primary"
+              size="small"
+              @click="handleEdit(row)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              v-permission="BUTTON_PERMISSIONS.ADMIN_ROLE_RESOURCE_UPDATE_BUTTON"
+              type="success"
+              size="small"
+              @click="handleUpdateResources(row)"
+            >
               资源
             </el-button>
-            <el-button type="danger" size="small" @click="handleDelete(row)"> 删除 </el-button>
+            <el-button
+              v-permission="BUTTON_PERMISSIONS.ADMIN_ROLE_DELETE_BUTTON"
+              type="danger"
+              size="small"
+              @click="handleDelete(row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -161,6 +184,7 @@ import {
   updateRoleResources,
 } from '@/api/admin/role'
 import { getResourceRelationTree } from '@/api/admin/resourceRelation'
+import { BUTTON_PERMISSIONS } from '@/constants/permissionCode'
 import type { Role, CreateRoleRequest, UpdateRoleRequest, RolePageParams } from '@/types/role'
 import type { ResourceRelationTreeNode } from '@/types/resourceRelation'
 
