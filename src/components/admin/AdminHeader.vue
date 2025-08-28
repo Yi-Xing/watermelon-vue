@@ -2,7 +2,7 @@
   <el-header class="header">
     <div class="header-content">
       <div class="logo-section">
-        <RouterLink to="/admin/dashboard" class="logo-link">
+        <RouterLink to="/admin" class="logo-link">
           <img src="@/assets/logo.webp" alt="Watermelon Logo" class="logo-icon" />
           <h1 class="logo">Watermelon</h1>
         </RouterLink>

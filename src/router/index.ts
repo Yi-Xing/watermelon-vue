@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useUserStore } from '@/stores/userToken'
 import { useUserAuthStore } from '@/stores/userInfo'
-import { PAGE_PERMISSIONS } from '@/constants/permissionCode'
+import { PAGE_PERMISSIONS, type PagePermission } from '@/constants/permissionCode'
 import { getCurrentUser } from '@/api/auth'
 import { ElMessage } from 'element-plus'
 import LoginView from '../views/LoginView.vue'
@@ -14,15 +14,6 @@ import RoleManagement from '../views/admin/RoleManagement.vue'
 import ResourceManagement from '../views/admin/ResourceManagement.vue'
 import ResourceRelationManagement from '../views/admin/ResourceRelationManagement.vue'
 
-// 页面权限映射
-const pagePermissions: Record<string, string> = {
-  '/admin/dashboard': PAGE_PERMISSIONS.ADMIN_DASHBOARD_PAGE,
-  '/admin/users': PAGE_PERMISSIONS.ADMIN_USER_PAGE,
-  '/admin/roles': PAGE_PERMISSIONS.ADMIN_ROLE_PAGE,
-  '/admin/resources': PAGE_PERMISSIONS.ADMIN_RESOURCE_PAGE,
-  '/admin/resource-relations': PAGE_PERMISSIONS.ADMIN_RESOURCE_RELATION_PAGE,
-}
-
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -33,7 +24,7 @@ const router = createRouter({
         const isLoggedIn = userStore.isLoggedIn
 
         if (isLoggedIn) {
-          return '/admin/dashboard'
+          return '/admin'
         } else {
           return '/login'
         }
@@ -50,32 +41,38 @@ const router = createRouter({
       children: [
         {
           path: '',
+          // 可以使用 beforeEnter 跳转到有权限的路由，省事没做
           redirect: '/admin/dashboard',
         },
         {
           path: 'dashboard',
           name: 'admin-dashboard',
           component: AdminDashboard,
+          meta: { permission: PAGE_PERMISSIONS.ADMIN_DASHBOARD_PAGE },
         },
         {
           path: 'users',
           name: 'admin-users',
           component: UserManagement,
+          meta: { permission: PAGE_PERMISSIONS.ADMIN_USER_PAGE },
         },
         {
           path: 'roles',
           name: 'admin-roles',
           component: RoleManagement,
+          meta: { permission: PAGE_PERMISSIONS.ADMIN_ROLE_PAGE },
         },
         {
           path: 'resources',
           name: 'admin-resources',
           component: ResourceManagement,
+          meta: { permission: PAGE_PERMISSIONS.ADMIN_RESOURCE_PAGE },
         },
         {
           path: 'resource-relations',
           name: 'admin-resource-relations',
           component: ResourceRelationManagement,
+          meta: { permission: PAGE_PERMISSIONS.ADMIN_RESOURCE_RELATION_PAGE },
         },
       ],
     },
@@ -127,8 +124,8 @@ router.beforeEach(async (to, from, next) => {
     }
 
     // 权限加载完成后，检查页面权限
-    const requiredPermission = pagePermissions[to.path]
-    if (requiredPermission && !userAuthStore.hasPagePermission(requiredPermission)) {
+    const requiredPermission = to.meta.permission as PagePermission
+    if (!userAuthStore.hasPagePermission(requiredPermission)) {
       // 没有权限访问该页面，跳转到403页面
       next('/403')
       return

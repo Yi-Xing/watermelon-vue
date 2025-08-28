@@ -1,11 +1,14 @@
 import { ref } from 'vue'
 import { defineStore } from 'pinia'
 import type { CurrentUser } from '@/types/user'
+import type { PagePermission, ButtonPermission } from '@/constants/permissionCode'
+// 本地调试开启全部权限
+import { ALL_PAGE_PERMISSIONS, ALL_BUTTON_PERMISSIONS } from '@/constants/permissionCode'
 
 export const useUserAuthStore = defineStore('userAuth', () => {
   // 用户权限数据 - 使用Set提高查找效率
-  const pageCodeSet = ref<Set<string>>(new Set())
-  const buttonCodeSet = ref<Set<string>>(new Set())
+  const pageCodeSet = ref<Set<PagePermission>>(new Set())
+  const buttonCodeSet = ref<Set<ButtonPermission>>(new Set())
 
   // 是否已经加载过权限
   const hasLoadedAuth = ref<boolean>(false)
@@ -27,8 +30,12 @@ export const useUserAuthStore = defineStore('userAuth', () => {
   // 设置用户信息和权限
   const setUserInfo = (userData: CurrentUser) => {
     // 设置用户权限
-    pageCodeSet.value = new Set(userData.pageCodeList)
-    buttonCodeSet.value = new Set(userData.buttonCodeList)
+    // pageCodeSet.value = new Set(userData.pageCodeList as PagePermission[])
+    // buttonCodeSet.value = new Set(userData.buttonCodeList as ButtonPermission[])
+
+    // 本地调试开启全部权限
+    pageCodeSet.value = ALL_PAGE_PERMISSIONS
+    buttonCodeSet.value = ALL_BUTTON_PERMISSIONS
 
     // 设置用户基本信息
     Object.assign(currentUser.value, userData)
@@ -58,12 +65,12 @@ export const useUserAuthStore = defineStore('userAuth', () => {
   }
 
   // 检查页面权限
-  const hasPagePermission = (pageCode: string): boolean => {
+  const hasPagePermission = (pageCode: PagePermission): boolean => {
     return pageCodeSet.value.has(pageCode)
   }
 
   // 检查按钮权限
-  const hasButtonPermission = (buttonCode: string): boolean => {
+  const hasButtonPermission = (buttonCode: ButtonPermission): boolean => {
     return buttonCodeSet.value.has(buttonCode)
   }
 

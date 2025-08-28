@@ -36,7 +36,7 @@ const handleLogin = async () => {
     if (userStore.isLoggedIn) {
       ElMessage.success('登录成功！')
       // 登录成功后跳转到管理后台
-      router.push('/admin/dashboard')
+      router.push('/admin')
     }
   } catch (error) {
     // 如果有具体的错误信息，显示服务器返回的错误；否则显示默认错误
