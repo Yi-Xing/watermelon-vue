@@ -1,6 +1,6 @@
 import { useHttp } from '@/composables/useHttp'
 import { useApi } from '@/composables/useApi'
-import { useUserStore } from '@/stores/user'
+import { useUserStore } from '@/stores/userToken'
 import type { LoginRequestPayload, LoginResponseData } from '@/types/auth'
 import type { CurrentUser, ApiResponse } from '@/types/user'
 

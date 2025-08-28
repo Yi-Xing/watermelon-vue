@@ -11,7 +11,7 @@
         <el-dropdown>
           <span class="user-dropdown">
             <el-avatar :size="32" :src="avatarSrc" />
-            <span class="username">{{ currentUser.name }}</span>
+            <span class="username">{{ userAuthStore.currentUser.name }}</span>
             <el-icon><ArrowDown /></el-icon>
           </span>
           <template #dropdown>
@@ -31,31 +31,31 @@
       <div class="profile-grid">
         <div class="profile-item">
           <label class="profile-label">用户ID</label>
-          <span class="profile-value">{{ currentUser.id }}</span>
+          <span class="profile-value">{{ userAuthStore.currentUser.id }}</span>
         </div>
         <div class="profile-item">
           <label class="profile-label">用户名</label>
-          <span class="profile-value">{{ currentUser.name }}</span>
+          <span class="profile-value">{{ userAuthStore.currentUser.name }}</span>
         </div>
         <div class="profile-item">
           <label class="profile-label">邮箱</label>
-          <span class="profile-value">{{ currentUser.email || '未设置' }}</span>
+          <span class="profile-value">{{ userAuthStore.currentUser.email || '未设置' }}</span>
         </div>
         <div class="profile-item">
           <label class="profile-label">手机号</label>
-          <span class="profile-value">{{ currentUser.phone || '未设置' }}</span>
+          <span class="profile-value">{{ userAuthStore.currentUser.phone || '未设置' }}</span>
         </div>
         <div class="profile-item full-width">
           <label class="profile-label">备注</label>
-          <span class="profile-value">{{ currentUser.remark || '无备注信息' }}</span>
+          <span class="profile-value">{{ userAuthStore.currentUser.remark || '无备注信息' }}</span>
         </div>
         <div class="profile-item">
           <label class="profile-label">创建时间</label>
-          <span class="profile-value">{{ currentUser.createdTime }}</span>
+          <span class="profile-value">{{ userAuthStore.currentUser.createdTime }}</span>
         </div>
         <div class="profile-item">
           <label class="profile-label">更新时间</label>
-          <span class="profile-value">{{ currentUser.updatedTime }}</span>
+          <span class="profile-value">{{ userAuthStore.currentUser.updatedTime }}</span>
         </div>
       </div>
     </div>
@@ -66,14 +66,13 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 import { ArrowDown } from '@element-plus/icons-vue'
 import { useRouter } from 'vue-router'
-import { getCurrentUser, logout } from '@/api/auth'
-import type { CurrentUser } from '@/types/user'
+import { logout } from '@/api/auth'
 import DefaultAvatar from '@/assets/DefaultAvatar.png'
-import { useUserAuthStore } from '@/stores/userAuth'
+import { useUserAuthStore } from '@/stores/userInfo'
 
 const router = useRouter()
 const userAuthStore = useUserAuthStore()
@@ -81,37 +80,7 @@ const userAuthStore = useUserAuthStore()
 // 头像图片路径
 const avatarSrc = DefaultAvatar
 
-// 当前用户信息
-const currentUser = reactive<CurrentUser>({
-  id: 0,
-  name: '加载中...',
-  email: '',
-  phone: '',
-  remark: '',
-  createdTime: '',
-  updatedTime: '',
-  expireTime: '',
-  pageCodeList: [],
-  buttonCodeList: [],
-})
-
 const profileDialogVisible = ref(false)
-
-// 获取当前用户信息
-const loadCurrentUser = async () => {
-  try {
-    const userData = await getCurrentUser()
-    Object.assign(currentUser, userData)
-
-    // 将用户权限信息存储到store中
-    userAuthStore.setUserAuth(userData.pageCodeList, userData.buttonCodeList)
-  } catch (error) {
-    console.error('获取用户信息失败:', error)
-    // 跳转到登录页面
-    router.push('/login')
-    ElMessage.error(error instanceof Error ? error.message : '获取用户信息失败')
-  }
-}
 
 // 用户操作处理
 const handleProfile = () => {
@@ -129,11 +98,6 @@ const handleLogout = async () => {
     ElMessage.error(error instanceof Error ? error.message : '退出登录失败')
   }
 }
-
-// 组件挂载时获取用户信息
-onMounted(() => {
-  loadCurrentUser()
-})
 </script>
 
 <style scoped>

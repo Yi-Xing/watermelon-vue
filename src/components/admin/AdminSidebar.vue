@@ -9,23 +9,32 @@
     </div>
 
     <el-menu :default-active="activeMenu" class="sidebar-menu" router :collapse="isCollapsed">
-      <el-menu-item index="/admin/dashboard">
+      <el-menu-item
+        index="/admin/dashboard"
+        v-permission="BUTTON_PERMISSIONS.ADMIN_DASHBOARD_BUTTON"
+      >
         <el-icon><DataBoard /></el-icon>
         <span>仪表盘</span>
       </el-menu-item>
-      <el-menu-item index="/admin/users">
+      <el-menu-item index="/admin/users" v-permission="BUTTON_PERMISSIONS.ADMIN_USER_BUTTON">
         <el-icon><User /></el-icon>
         <span>用户管理</span>
       </el-menu-item>
-      <el-menu-item index="/admin/roles">
+      <el-menu-item index="/admin/roles" v-permission="BUTTON_PERMISSIONS.ADMIN_ROLE_BUTTON">
         <el-icon><UserFilled /></el-icon>
         <span>角色管理</span>
       </el-menu-item>
-      <el-menu-item index="/admin/resources">
+      <el-menu-item
+        index="/admin/resources"
+        v-permission="BUTTON_PERMISSIONS.ADMIN_RESOURCE_BUTTON"
+      >
         <el-icon><Files /></el-icon>
         <span>资源管理</span>
       </el-menu-item>
-      <el-menu-item index="/admin/resource-relations">
+      <el-menu-item
+        index="/admin/resource-relations"
+        v-permission="BUTTON_PERMISSIONS.ADMIN_RESOURCE_RELATION_BUTTON"
+      >
         <el-icon><Connection /></el-icon>
         <span>资源关联管理</span>
       </el-menu-item>
@@ -45,6 +54,7 @@ import {
   Connection,
 } from '@element-plus/icons-vue'
 import { useRoute } from 'vue-router'
+import { BUTTON_PERMISSIONS } from '@/constants/permissionCode'
 
 const route = useRoute()
 

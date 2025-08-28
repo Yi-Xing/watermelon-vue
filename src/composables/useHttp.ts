@@ -1,5 +1,5 @@
 import { envConfig } from '@/config/env'
-import { useUserStore } from '@/stores/user'
+import { useUserStore } from '@/stores/userToken'
 import { LOGIN_EXPIRED_MESSAGE } from '@/constants/localStorageKey'
 
 // 处理401未授权错误

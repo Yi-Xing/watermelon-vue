@@ -6,6 +6,7 @@ import 'element-plus/dist/index.css'
 
 import App from './App.vue'
 import router from './router'
+import { setupDirectives } from './directives'
 
 // 创建Vue应用实例
 // 传入根组件 App 作为应用的起点，所有其他组件都是它的子组件
@@ -22,6 +23,9 @@ app.use(router)
 app.use(ElementPlus, {
   locale: zhCn,
 })
+
+// 注册自定义指令
+setupDirectives(app)
 
 // 将Vue应用挂载到DOM元素上
 // '#app'对应index.html中的<div id="app"></div>

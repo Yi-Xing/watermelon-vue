@@ -3,7 +3,11 @@
     <!-- 页面标题 -->
     <div class="page-header">
       <h2>用户管理</h2>
-      <el-button type="primary" @click="handleAdd">
+      <el-button
+        v-permission="BUTTON_PERMISSIONS.ADMIN_USER_ADD_BUTTON"
+        type="primary"
+        @click="handleAdd"
+      >
         <el-icon><Plus /></el-icon>
         新增用户
       </el-button>
@@ -57,11 +61,30 @@
         <el-table-column prop="updatedTime" label="更新时间" width="180" />
         <el-table-column label="操作" width="280">
           <template #default="{ row }">
-            <el-button type="primary" size="small" @click="handleEdit(row)"> 编辑 </el-button>
-            <el-button type="warning" size="small" @click="handleResetPassword(row)">
+            <el-button
+              v-permission="BUTTON_PERMISSIONS.ADMIN_USER_UPDATE_BUTTON"
+              type="primary"
+              size="small"
+              @click="handleEdit(row)"
+            >
+              编辑
+            </el-button>
+            <el-button
+              v-permission="BUTTON_PERMISSIONS.ADMIN_USER_PASSWORD_UPDATE_BUTTON"
+              type="warning"
+              size="small"
+              @click="handleResetPassword(row)"
+            >
               重置密码
             </el-button>
-            <el-button type="danger" size="small" @click="handleDelete(row)"> 删除 </el-button>
+            <el-button
+              v-permission="BUTTON_PERMISSIONS.ADMIN_USER_DELETE_BUTTON"
+              type="danger"
+              size="small"
+              @click="handleDelete(row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -180,6 +203,7 @@ import {
   resetPassword,
 } from '@/api/admin/user'
 import { getRoleList } from '@/api/admin/role'
+import { BUTTON_PERMISSIONS } from '@/constants/permissionCode'
 import type {
   UserListItem,
   CreateUserRequest,

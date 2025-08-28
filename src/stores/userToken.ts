@@ -4,7 +4,7 @@ import { useHttp } from '@/composables/useHttp'
 import { login as loginRequest } from '@/services/auth'
 import type { LoginRequestPayload, LoginResponseData } from '@/types/auth'
 import { USER_TOKEN } from '@/constants/localStorageKey'
-import { useUserAuthStore } from './userAuth'
+import { useUserAuthStore } from './userInfo'
 
 export const useUserStore = defineStore('user', () => {
   // 从 localStorage 初始化 token，如果没有则设为 null
@@ -32,12 +32,10 @@ export const useUserStore = defineStore('user', () => {
 
   function logout() {
     token.value = null
-    // 清除 localStorage 中的 token
-
-    // 清空用户权限信息
+    // 清空用户权限和用户信息
     const userAuthStore = useUserAuthStore()
-    userAuthStore.clearUserAuth()
-
+    userAuthStore.clearUserInfo()
+    // 清除 localStorage 中的 token
     localStorage.removeItem(USER_TOKEN)
   }
 

@@ -1,13 +1,27 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { useUserStore } from '@/stores/user'
+import { useUserStore } from '@/stores/userToken'
+import { useUserAuthStore } from '@/stores/userInfo'
+import { PAGE_PERMISSIONS } from '@/constants/permissionCode'
+import { getCurrentUser } from '@/api/auth'
+import { ElMessage } from 'element-plus'
 import LoginView from '../views/LoginView.vue'
-import NotFound from '../views/NotFound.vue'
+import NotFound from '../views/404.vue'
+import ForbiddenView from '../views/403.vue'
 import AdminLayout from '../layouts/AdminLayout.vue'
 import AdminDashboard from '../views/admin/AdminDashboard.vue'
 import UserManagement from '../views/admin/UserManagement.vue'
 import RoleManagement from '../views/admin/RoleManagement.vue'
 import ResourceManagement from '../views/admin/ResourceManagement.vue'
 import ResourceRelationManagement from '../views/admin/ResourceRelationManagement.vue'
+
+// 页面权限映射
+const pagePermissions: Record<string, string> = {
+  '/admin/dashboard': PAGE_PERMISSIONS.ADMIN_DASHBOARD_PAGE,
+  '/admin/users': PAGE_PERMISSIONS.ADMIN_USER_PAGE,
+  '/admin/roles': PAGE_PERMISSIONS.ADMIN_ROLE_PAGE,
+  '/admin/resources': PAGE_PERMISSIONS.ADMIN_RESOURCE_PAGE,
+  '/admin/resource-relations': PAGE_PERMISSIONS.ADMIN_RESOURCE_RELATION_PAGE,
+}
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -65,6 +79,12 @@ const router = createRouter({
         },
       ],
     },
+    // 403 权限不足页面
+    {
+      path: '/403',
+      name: 'forbidden',
+      component: ForbiddenView,
+    },
     // 404 页面 - 必须放在最后，作为通配符路由
     {
       path: '/:pathMatch(.*)*',
@@ -75,7 +95,7 @@ const router = createRouter({
 })
 
 // 全局前置守卫
-router.beforeEach((to, from, next) => {
+router.beforeEach(async (to, from, next) => {
   // 检查是否访问admin路径
   if (to.path.startsWith('/admin')) {
     // 通过store检查用户是否已登录
@@ -85,6 +105,32 @@ router.beforeEach((to, from, next) => {
     if (!isLoggedIn) {
       // 未登录，跳转到登录页面
       next('/login')
+      return
+    }
+
+    const userAuthStore = useUserAuthStore()
+
+    // 如果权限还没有加载过，则先加载权限
+    if (!userAuthStore.hasLoadedAuth) {
+      try {
+        const userData = await getCurrentUser()
+
+        // 将用户信息和权限一起存储到store中
+        userAuthStore.setUserInfo(userData)
+      } catch (error) {
+        console.error('获取用户信息失败:', error)
+        // 跳转到登录页面
+        ElMessage.error(error instanceof Error ? error.message : '获取用户信息失败')
+        next('/login')
+        return
+      }
+    }
+
+    // 权限加载完成后，检查页面权限
+    const requiredPermission = pagePermissions[to.path]
+    if (requiredPermission && !userAuthStore.hasPagePermission(requiredPermission)) {
+      // 没有权限访问该页面，跳转到403页面
+      next('/403')
       return
     }
   }

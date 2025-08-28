@@ -1,4 +1,4 @@
-import { useUserStore } from '@/stores/user'
+import { useUserStore } from '@/stores/userToken'
 
 // 通用的API工具函数
 export function useApi() {

@@ -2,7 +2,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { LOGIN_EXPIRED_MESSAGE } from '@/constants/localStorageKey'
 import { ElMessage } from 'element-plus'
-import { useUserStore } from '@/stores/user'
+import { useUserStore } from '@/stores/userToken'
 import AppAbout from '@/components/AppAbout.vue'
 import { User, Lock } from '@element-plus/icons-vue'
 import GitHubIcon from '@/components/icons/GitHubIcon.vue'
