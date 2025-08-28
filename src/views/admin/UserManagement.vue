@@ -289,7 +289,6 @@ const resetPasswordRules = {
 // 初始化数据
 onMounted(() => {
   loadUsers()
-  loadRoles()
 })
 
 // 加载角色列表
@@ -354,10 +353,18 @@ const handleReset = () => {
 }
 
 // 新增用户
-const handleAdd = () => {
-  dialogType.value = 'add'
-  resetUserForm()
-  dialogVisible.value = true
+const handleAdd = async () => {
+  try {
+    // 先加载角色列表
+    await loadRoles()
+
+    dialogType.value = 'add'
+    resetUserForm()
+    dialogVisible.value = true
+  } catch (error) {
+    console.error('加载角色列表失败:', error)
+    ElMessage.error('加载角色列表失败，无法新增用户')
+  }
 }
 
 // 编辑用户
@@ -365,6 +372,8 @@ const handleEdit = async (row: UserListItem) => {
   try {
     dialogType.value = 'edit'
     loading.value = true
+    // 先加载角色列表
+    await loadRoles()
 
     // 调用API获取用户详情
     const response = await getUserDetail(row.id)

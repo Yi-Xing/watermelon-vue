@@ -330,6 +330,7 @@ const relationFormRules = {
 // 初始化数据
 onMounted(() => {
   loadResourceRelations()
+  // 加载新增和编辑时，需要的父级资源树
   loadParentResources()
 })
 
