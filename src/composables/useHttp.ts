@@ -50,6 +50,12 @@ export function useHttp() {
       headers.Authorization = 'Bearer xxx'
     }
 
+    // 添加 traceparent 头部用于分布式追踪
+    const traceparent = generateTraceparent()
+    if (traceparent) {
+      headers.traceparent = traceparent
+    }
+
     const response = await fetch(normalizeUrl(pathOrUrl), {
       method: 'GET',
       headers,
@@ -73,6 +79,12 @@ export function useHttp() {
       headers.Authorization = `Bearer ${token}`
     } else {
       headers.Authorization = 'Bearer xxx'
+    }
+
+    // 添加 traceparent 头部用于分布式追踪
+    const traceparent = generateTraceparent()
+    if (traceparent) {
+      headers.traceparent = traceparent
     }
 
     const response = await fetch(normalizeUrl(pathOrUrl), {
@@ -101,6 +113,12 @@ export function useHttp() {
       headers.Authorization = 'Bearer xxx'
     }
 
+    // 添加 traceparent 头部用于分布式追踪
+    const traceparent = generateTraceparent()
+    if (traceparent) {
+      headers.traceparent = traceparent
+    }
+
     const response = await fetch(normalizeUrl(pathOrUrl), {
       method: 'PUT',
       headers,
@@ -125,6 +143,12 @@ export function useHttp() {
       headers.Authorization = `Bearer ${token}`
     } else {
       headers.Authorization = 'Bearer xxx'
+    }
+
+    // 添加 traceparent 头部用于分布式追踪
+    const traceparent = generateTraceparent()
+    if (traceparent) {
+      headers.traceparent = traceparent
     }
 
     const response = await fetch(normalizeUrl(pathOrUrl), {
@@ -168,4 +192,25 @@ async function safeReadText(res: Response): Promise<string> {
   } catch {
     return ''
   }
+}
+
+// 生成 traceparent 头部值
+function generateTraceparent(): string | null {
+  try {
+    // 生成随机的 trace ID 和 span ID
+    const traceId = generateRandomHex(32)
+    const spanId = generateRandomHex(16)
+    const traceFlags = '00' // 采样标志
+
+    return `00-${traceId}-${spanId}-${traceFlags}`
+  } catch {
+    return null
+  }
+}
+
+// 生成指定长度的随机十六进制字符串
+function generateRandomHex(length: number): string {
+    const arr = new Uint8Array(length / 2)
+    crypto.getRandomValues(arr)
+    return Array.from(arr, b => b.toString(16).padStart(2, '0')).join('')
 }
