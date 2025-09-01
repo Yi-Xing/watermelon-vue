@@ -14,7 +14,7 @@ function handleUnauthorized() {
 
   // 重定向到登录页面
   if (window.location.pathname !== '/login') {
-    window.location.href = '/login'
+    window.location.replace('/login')
   }
 }
 
