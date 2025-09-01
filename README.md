@@ -1,4 +1,5 @@
 # Watermelon 用户权限管理系统
+
 <p align="center">
   <a href="https://github.com/Yi-Xing/watermelon" target="_blank">
    <img src="https://raw.githubusercontent.com/Yi-Xing/watermelon-vue/main/src/assets/logo.webp" width="200" height="200" alt="Watermelon Logo">
@@ -8,24 +9,50 @@
 ## 项目简介
 
 基于 Vue 3 + TypeScript + Element Plus 的用户权限管理系统，实现了完整的 RBAC（基于角色的访问控制）权限模型。系统提供用户管理、角色管理、资源管理等核心功能，支持细粒度的权限控制。
+
 - 前端：https://github.com/Yi-Xing/watermelon-vue
 - 后端：https://github.com/Yi-Xing/watermelon
+
+## 📸 系统截图
+
+### 登录页面
+
+<img src="public/img/login.png" alt="登录页面" width="300" height="200">
+
+### 用户管理
+
+<img src="public/img/user.png" alt="用户管理" width="300" height="200">
+
+### 角色管理
+
+<img src="public/img/role.png" alt="角色管理" width="300" height="200">
+
+### 资源管理
+
+<img src="public/img/resource.png" alt="资源管理" width="300" height="200">
+
+### 资源关联管理
+
+<img src="public/img/resource_relation.png" alt="资源关联管理" width="300" height="200">
 
 ## ✨ 功能特性
 
 ### 🔐 权限管理
+
 - **用户管理**：创建、编辑、删除用户，修改用户密码
 - **角色管理**：定义用户角色，配置角色权限
 - **资源管理**：管理系统资源，支持 Excel 导入导出
 - **资源关联管理**：配置资源之间的关联关系
 
 ### 🛡️ 安全特性
+
 - JWT Token 认证，自动刷新机制
 - 路由级权限控制
 - 按钮级权限控制（通过自定义指令）
 - 403/404 错误页面
 
 ### 🎨 用户体验
+
 - 响应式设计
 - Element Plus 组件库，界面美观
 - 路由懒加载
@@ -33,21 +60,26 @@
 ## 🛠️ 技术栈
 
 ### 前端框架
+
 - **Vue 3** - 渐进式 JavaScript 框架
 - **TypeScript** - 类型安全的 JavaScript 超集
 - **Vite** - 快速的前端构建工具
 
 ### UI 组件库
+
 - **Element Plus** - Vue 3 组件库
 - **@element-plus/icons-vue** - Element Plus 图标
 
 ### 状态管理
+
 - **Pinia** - Vue 3 官方推荐的状态管理库
 
 ### 路由管理
+
 - **Vue Router 4** - Vue 3 官方路由管理器
 
 ### 开发工具
+
 - **ESLint** - 代码质量检查
 - **Prettier** - 代码格式化
 - **Vue DevTools** - Vue 开发者工具
@@ -98,15 +130,18 @@ src/
 ## 🚀 快速开始
 
 ### 环境要求
+
 - Node.js >= 20.19.0 或 >= 22.12.0
 - pnpm（推荐）或 npm
 
 ### 安装依赖
+
 ```bash
 pnpm install
 ```
 
 ### 开发环境运行
+
 ```bash
 pnpm dev
 ```
@@ -114,6 +149,7 @@ pnpm dev
 应用将在 `http://localhost:3000` 启动
 
 ### 构建生产版本
+
 ```bash
 pnpm build
 ```
@@ -121,6 +157,7 @@ pnpm build
 ## ⚙️ 配置说明
 
 ### 开发服务器配置
+
 开发服务器默认运行在端口 3000，并配置了 API 代理：
 
 ```typescript
@@ -139,6 +176,7 @@ server: {
 ```
 
 ### 环境变量
+
 在项目根目录创建 `.env.local` 文件配置环境变量：
 
 ```env
@@ -151,6 +189,7 @@ VITE_API_BASE_URL=http://127.0.0.1:8080
 ## 🔐 权限系统说明
 
 ### 权限模型
+
 本系统采用 RBAC（基于角色的访问控制）模型：
 
 1. **用户（User）**：系统的操作主体
@@ -159,12 +198,14 @@ VITE_API_BASE_URL=http://127.0.0.1:8080
 4. **权限（Permission）**：对资源的操作权限
 
 ### 权限类型
+
 - **页面权限**：控制用户可以访问哪些页面
 - **按钮权限**：控制用户可以看到和操作哪些按钮
 
 ### 权限使用
 
 #### 1. 路由权限
+
 在路由配置中通过 `meta.permission` 字段配置页面权限：
 
 ```typescript
@@ -177,6 +218,7 @@ VITE_API_BASE_URL=http://127.0.0.1:8080
 ```
 
 #### 2. 按钮权限
+
 使用 `v-permission` 指令控制按钮显示：
 
 ```vue
@@ -188,16 +230,19 @@ VITE_API_BASE_URL=http://127.0.0.1:8080
 ## 🤝 开发规范
 
 ### 代码风格
+
 - 使用 TypeScript 进行类型检查
 - 遵循 ESLint 配置的代码规范
 - 使用 Prettier 进行代码格式化
 
 ### 组件开发
+
 - 使用 Vue 3 Composition API
 - 优先使用 `<script setup>` 语法
 - 合理使用 TypeScript 类型定义
 
 ### 状态管理
+
 - 使用 Pinia 进行状态管理
 - 按功能模块划分 Store
 - 避免在组件中直接操作状态
