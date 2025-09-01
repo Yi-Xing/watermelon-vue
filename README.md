@@ -10,8 +10,18 @@
 
 基于 Vue 3 + TypeScript + Element Plus 的用户权限管理系统，实现了完整的 RBAC（基于角色的访问控制）权限模型。系统提供用户管理、角色管理、资源管理等核心功能，支持细粒度的权限控制。
 
-- 前端：https://github.com/Yi-Xing/watermelon-vue
-- 后端：https://github.com/Yi-Xing/watermelon
+### 🌐 前端项目
+
+- **项目地址**: [watermelon-vue](https://github.com/Yi-Xing/watermelon-vue)
+- **系统截图**: [查看系统截图](https://github.com/Yi-Xing/watermelon-vue?tab=readme-ov-file#-%E7%B3%BB%E7%BB%9F%E6%88%AA%E5%9B%BE)
+
+### ⚙️ 后端项目
+
+- **项目地址**: [watermelon](https://github.com/Yi-Xing/watermelon)
+
+### 📝 问题反馈
+
+- **问题反馈**: [提交 Issue](https://github.com/Yi-Xing/watermelon/issues)
 
 ## 📸 系统截图
 
@@ -255,4 +265,4 @@ VITE_API_BASE_URL=http://127.0.0.1:8080
 
 如有问题或建议，请通过以下方式联系：
 
-- 问题反馈: https://github.com/Yi-Xing/watermelon-vue/issues
+- **问题反馈**: [提交 Issue](https://github.com/Yi-Xing/watermelon-vue/issues)
