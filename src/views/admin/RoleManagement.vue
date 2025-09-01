@@ -228,7 +228,7 @@ const roleForm = reactive({
 const roleRules = {
   name: [
     { required: true, message: '请输入角色名称', trigger: 'blur' },
-    { min: 3, max: 10, message: '角色名称长度在 3 到 10 个字符', trigger: 'blur' },
+    { min: 2, max: 10, message: '角色名称长度在 2 到 10 个字符', trigger: 'blur' },
   ],
   orderNum: [{ required: true, message: '请输入显示顺序', trigger: 'blur' }],
   state: [{ required: true, message: '请选择状态', trigger: 'change' }],

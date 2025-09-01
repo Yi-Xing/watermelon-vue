@@ -3,7 +3,7 @@ import { defineStore } from 'pinia'
 import type { CurrentUser } from '@/types/user'
 import type { PagePermission, ButtonPermission } from '@/constants/permissionCode'
 // 本地调试开启全部权限
-import { ALL_PAGE_PERMISSIONS, ALL_BUTTON_PERMISSIONS } from '@/constants/permissionCode'
+// import { ALL_PAGE_PERMISSIONS, ALL_BUTTON_PERMISSIONS } from '@/constants/permissionCode'
 
 export const useUserAuthStore = defineStore('userAuth', () => {
   // 用户权限数据 - 使用Set提高查找效率
@@ -34,8 +34,8 @@ export const useUserAuthStore = defineStore('userAuth', () => {
     buttonCodeSet.value = new Set(userData.buttonCodeList as ButtonPermission[])
 
     // 本地调试开启全部权限
-    pageCodeSet.value = ALL_PAGE_PERMISSIONS
-    buttonCodeSet.value = ALL_BUTTON_PERMISSIONS
+    // pageCodeSet.value = ALL_PAGE_PERMISSIONS
+    // buttonCodeSet.value = ALL_BUTTON_PERMISSIONS
 
     // 设置用户基本信息
     Object.assign(currentUser.value, userData)
