@@ -17,23 +17,23 @@
 
 ### 登录页面
 
-<img src="public/img/login.png" alt="登录页面" width="550" height="400">
+<img src="public/img/login.png" alt="登录页面" width="650" height="500">
 
 ### 用户管理
 
-<img src="public/img/user.png" alt="用户管理" width="550" height="400">
+<img src="public/img/user.png" alt="用户管理" width="650" height="500">
 
 ### 角色管理
 
-<img src="public/img/role.png" alt="角色管理" width="550" height="400">
+<img src="public/img/role.png" alt="角色管理" width="650" height="500">
 
 ### 资源管理
 
-<img src="public/img/resource.png" alt="资源管理" width="550" height="400">
+<img src="public/img/resource.png" alt="资源管理" width="650" height="500">
 
 ### 资源关联管理
 
-<img src="public/img/resource_relation.png" alt="资源关联管理" width="550" height="400">
+<img src="public/img/resource_relation.png" alt="资源关联管理" width="650" height="500">
 
 ## ✨ 功能特性
 
