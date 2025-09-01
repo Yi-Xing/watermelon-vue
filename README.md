@@ -21,7 +21,7 @@
 
 ### 📝 问题反馈
 
-- **问题反馈**: [提交 Issue](https://github.com/Yi-Xing/watermelon/issues)
+- **问题反馈**: [提交 Issue](https://github.com/Yi-Xing/watermelon-vue/issues)
 
 ## 📸 系统截图
 
