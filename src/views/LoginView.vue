@@ -120,10 +120,11 @@ onMounted(() => {
             <div class="feature-list">
               <div class="feature-item">
                 <div class="feature-content">
-                  <p>用户登录、注册和权限管理系统</p>
-                  <p>用户登录、注册和权限管理系统</p>
-                  <p>用户登录、注册和权限管理系统</p>
-                  <p>用户登录、注册和权限管理系统</p>
+                  <p>基于 RBAC 的权限管理系统</p>
+                  <p>前端采用 Vue 3 + Element Plus 开发</p>
+                  <p>后端采用 Spring Boot 3.2 开发</p>
+                  <p>支持用户、角色、资源管理</p>
+                  <p>支持细粒度的权限控制</p>
                 </div>
               </div>
             </div>
