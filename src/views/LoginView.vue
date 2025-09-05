@@ -1,17 +1,25 @@
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { LOGIN_EXPIRED_MESSAGE } from '@/constants/localStorageKey'
+import { SYSTEM_CONFIGS, DEFAULT_SYSTEM_CONFIG } from '@/constants/systemConfig'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/userToken'
 import AppAbout from '@/components/AppAbout.vue'
 import { User, Lock } from '@element-plus/icons-vue'
 import GitHubIcon from '@/components/icons/GitHubIcon.vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import AppHeader from '@/components/AppHeader.vue'
 
 const userStore = useUserStore()
 const loginFormRef = ref()
 const router = useRouter()
+const route = useRoute()
+
+// 根据URL参数获取系统配置
+const systemConfig = computed(() => {
+  const systemType = route.query.system as string
+  return SYSTEM_CONFIGS[systemType] || DEFAULT_SYSTEM_CONFIG
+})
 
 const loginForm = reactive({
   username: '',
@@ -68,7 +76,7 @@ onMounted(() => {
         <div class="login-form-section">
           <div class="login-box">
             <h2 class="login-title">
-              <img src="@/assets/logo.webp" alt="Watermelon Logo" class="title-logo" />
+              <img :src="systemConfig.logo" :alt="`${systemConfig.name} Logo`" class="title-logo" />
               登录
             </h2>
 
@@ -114,24 +122,20 @@ onMounted(() => {
         <!-- 右侧系统介绍 -->
         <div class="welcome-section">
           <div class="welcome-box">
-            <h2 class="welcome-title">欢迎来到 Watermelon</h2>
-            <p class="welcome-subtitle">用户权限管理系统</p>
+            <h2 class="welcome-title">{{ systemConfig.title }}</h2>
+            <p class="welcome-subtitle">{{ systemConfig.subtitle }}</p>
 
             <div class="feature-list">
               <div class="feature-item">
                 <div class="feature-content">
-                  <p>基于 RBAC 的权限管理系统</p>
-                  <p>前端采用 Vue 3 + Element Plus 开发</p>
-                  <p>后端采用 Spring Boot 3.2 开发</p>
-                  <p>支持用户、角色、资源管理</p>
-                  <p>支持细粒度的权限控制</p>
+                  <p v-for="feature in systemConfig.features" :key="feature">{{ feature }}</p>
                 </div>
               </div>
             </div>
 
             <div class="welcome-footer">
               <p>
-                <a href="https://github.com/Yi-Xing/watermelon" target="_blank" class="github-link">
+                <a :href="systemConfig.githubUrl" target="_blank" class="github-link">
                   <GitHubIcon :size="18" />
                   GitHub 仓库
                 </a>

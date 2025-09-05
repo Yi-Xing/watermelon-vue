@@ -1,19 +1,24 @@
 <template>
   <el-header class="header">
     <div class="container header-inner">
-      <div class="logo-section">
-        <RouterLink to="/" class="logo-link">
-          <img src="@/assets/logo.webp" alt="Watermelon Logo" class="logo-icon" />
-          <h1 class="logo">Watermelon</h1>
-        </RouterLink>
+      <div class="logos-container">
+        <div
+          v-for="config in SYSTEM_CONFIGS"
+          :key="config.id"
+          class="logo-section"
+        >
+          <RouterLink :to="`/?system=${config.id}`" class="logo-link">
+            <img :src="config.logo" :alt="`${config.name} Logo`" class="logo-icon" />
+            <h1 class="logo">{{ config.name }}</h1>
+          </RouterLink>
+        </div>
       </div>
-      <el-space> </el-space>
     </div>
   </el-header>
 </template>
 
 <script setup lang="ts">
-// 组件逻辑可以在这里添加
+import { SYSTEM_CONFIGS } from '@/constants/systemConfig'
 </script>
 
 <style scoped>
@@ -27,9 +32,15 @@
 
 .header-inner {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   height: 100%;
+}
+
+.logos-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .logo-section {
